@@ -2,7 +2,7 @@ package;
 
 import Sys.sleep;
 import discord_rpc.DiscordRpc;
-
+import meta.state.MainMenuState;
 #if LUA_ALLOWED
 import llua.Lua;
 import llua.State;
