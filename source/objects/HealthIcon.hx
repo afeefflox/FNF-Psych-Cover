@@ -3,7 +3,11 @@ package objects;
 import flixel.graphics.FlxGraphic;
 import flixel.FlxSprite;
 import openfl.utils.Assets as OpenFlAssets;
-
+import util.script.FunkinHaxe;
+import util.script.Globals;
+#if sys
+import sys.FileSystem;
+#end
 using StringTools;
 
 class HealthIcon extends FlxSprite
@@ -17,6 +21,7 @@ class HealthIcon extends FlxSprite
 
 	public var initialWidth:Float = 0;
 	public var initialHeight:Float = 0;
+	public var haxeArray:Array<FunkinHaxe> = [];
 
 	public var offsetX = 0;
 	public var offsetY = 0;
@@ -58,17 +63,24 @@ class HealthIcon extends FlxSprite
 			
 			offsetX = 0;
 			offsetY = 0;
-
-			var iconPath = char;
-			if (!Paths.fileExists('images/icons/icon-' + iconPath + '.png', IMAGE))
-			{
-				if (iconPath != char)
-					iconPath = char;
-				else
-					iconPath = 'face';
-				trace('$char icon trying $iconPath instead you fuck');
+			for (lua in haxeArray) {
+				lua.call('onDestroy', []);
+				lua.call('destroy', []);
+				lua.stop();
 			}
-			var iconGraphic:FlxGraphic = Paths.image('icons/icon-' + iconPath);
+			haxeArray = [];
+
+			var name:String = 'icons/' + char;
+			if(!Paths.fileExists('images/' + name + '.png', IMAGE)) name = 'icons/icon-' + char; //Older versions of psych engine's support
+			if(!Paths.fileExists('images/' + name + '.png', IMAGE)) name = 'icons/icon-face'; //Prevents crash from missing icon
+			loadScript(name);
+			call('changeIcon', [char, newPlayer]);
+			set('icon', this);
+			set('isPlayer', isPlayer);
+			set('offsetX', offsetX);
+			set('offsetY', offsetY);
+			set('iconOffsets', iconOffsets);
+			var iconGraphic:FlxGraphic = Paths.image(name);
 			if(iconGraphic.width == 450)
 			{
 				loadGraphic(iconGraphic, true, Std.int(iconGraphic.width / 3), iconGraphic.height);
@@ -124,11 +136,35 @@ class HealthIcon extends FlxSprite
 		}
 	}
 
+	function loadScript(name:String) {
+		var doPush:Bool = false;
+		var hxFile:String = 'images/' + name + '.hx';
+		#if MODS_ALLOWED
+		if(FileSystem.exists(Paths.modFolders(hxFile))) {
+			hxFile = Paths.modFolders(hxFile);
+			doPush = true;
+		} else {
+			hxFile = Paths.getPreloadPath(hxFile);
+			if(FileSystem.exists(hxFile)) {
+				doPush = true;
+			}
+		}
+
+		if(doPush)
+		{
+			var haxeScript:FunkinHaxe = new FunkinHaxe(hxFile, true);
+			haxeArray.push(haxeScript);
+		}
+		#end
+	}
+
 	override function updateHitbox()
 	{
 		super.updateHitbox();
 		offset.x = iconOffsets[0];
 		offset.y = iconOffsets[1];
+		call('updateHitbox', []);
+		set('offset', offset);
 	}
 
 	public function updateAnims(health:Float)
@@ -162,9 +198,41 @@ class HealthIcon extends FlxSprite
 			else
 				animation.curAnim.curFrame = 0;
 		}
+
+		call('updateAnims', [health]);
 	}
 
 	public function getCharacter():String {
 		return char;
+	}
+
+	public function call(event:String, args:Array<Dynamic>, ignoreStops:Bool = false, ?exclusions:Array<String>, ?ignoreSpecialShit:Bool = true):Dynamic
+	{
+		var returnVal:Dynamic = FunkinHaxe.Function_Continue;
+		if(exclusions == null) exclusions = [];
+		for (script in haxeArray) {
+			if(exclusions.contains(script.scriptName))
+				continue;
+
+			var ret:Dynamic = script.call(event, args);
+			if(ret == FunkinHaxe.Function_StopHaxe && !ignoreStops)
+				break;
+			
+			// had to do this because there is a bug in haxe where Stop != Continue doesnt work
+			var bool:Bool = ret == FunkinHaxe.Function_Continue;
+			if(!bool && ret != 0) {
+				returnVal = cast ret;
+			}
+		}
+		//trace(event, returnVal);
+		return FunkinHaxe.Function_Continue;
+	}
+
+	public function set(variable:String, arg:Dynamic)
+	{
+		for (script in haxeArray)
+		{
+			script.set(variable, arg);
+		}
 	}
 }

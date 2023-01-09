@@ -5,6 +5,10 @@
 				2,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "idle",
 			"fps": 24,
@@ -15,6 +19,10 @@
 			"offsets": [
 				-47,
 				24
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"loop": false,
 			"anim": "singUP",
@@ -27,6 +35,10 @@
 				-31,
 				-29
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "singDOWN",
 			"fps": 24,
@@ -37,6 +49,10 @@
 			"offsets": [
 				-30,
 				16
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"loop": false,
 			"anim": "singLEFT",
@@ -49,6 +65,10 @@
 				-1,
 				-23
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "singRIGHT",
 			"fps": 24,
@@ -59,6 +79,10 @@
 			"offsets": [
 				-1,
 				-24
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"loop": false,
 			"anim": "singRIGHT-alt",
@@ -71,6 +95,10 @@
 				-30,
 				-27
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "singDOWN-alt",
 			"fps": 24,
@@ -81,6 +109,10 @@
 			"offsets": [
 				-30,
 				15
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"loop": false,
 			"anim": "singLEFT-alt",
@@ -93,6 +125,10 @@
 				-47,
 				24
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "singUP-alt",
 			"fps": 24,
@@ -102,6 +138,10 @@
 		{
 			"offsets": [
 				2,
+				0
+			],
+			"offsets_player":[
+				0,
 				0
 			],
 			"indices": [
@@ -120,6 +160,10 @@
 				-47,
 				24
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"indices": [
 				10,
 				11,
@@ -135,6 +179,10 @@
 			"offsets": [
 				-30,
 				16
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"indices": [
 				12,
@@ -152,6 +200,10 @@
 				-31,
 				-29
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"indices": [
 				11,
 				12,
@@ -167,6 +219,10 @@
 			"offsets": [
 				-1,
 				-23
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"indices": [
 				12,
@@ -184,6 +240,10 @@
 				-1,
 				-24
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"indices": [
 				11,
 				12,
@@ -199,6 +259,10 @@
 			"offsets": [
 				-47,
 				24
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"indices": [
 				10,
@@ -216,6 +280,10 @@
 				-30,
 				15
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"indices": [
 				11,
 				12,
@@ -231,6 +299,10 @@
 			"offsets": [
 				-30,
 				-27
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"indices": [
 				11,
@@ -250,7 +322,14 @@
 		-500,
 		0
 	],
+	"player_position": [
+		-500,
+		0
+	],
 	"healthicon": "parents",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "normal",
 	"flip_x": false,
 	"healthbar_colors": [
 		196,
@@ -258,6 +337,10 @@
 		174
 	],
 	"camera_position": [
+		0,
+		0
+	],
+	"playerCamera_position": [
 		0,
 		0
 	],

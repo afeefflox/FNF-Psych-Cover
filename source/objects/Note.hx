@@ -51,7 +51,7 @@ class Note extends FlxSprite
 	public var eventVal1:String = '';
 	public var eventVal2:String = '';
 
-	public var colorSwap:ColorSwap;
+	public var colorNote:ColorSwap;
 	public var inEditor:Bool = false;
 
 	public var animSuffix:String = '';
@@ -59,6 +59,7 @@ class Note extends FlxSprite
 	public var earlyHitMult:Float = 0.5;
 	public var lateHitMult:Float = 1;
 	public var lowPriority:Bool = false;
+	public var row:Int = 0;
 
 	public static var swagWidth:Float = 160 * 0.7;
 	
@@ -135,10 +136,12 @@ class Note extends FlxSprite
 		noteSplashTexture = PlayState.SONG.splashSkin;
 		if (noteData > -1 && noteData < ClientPrefs.arrowHSV.length)
 		{
-			colorSwap.hue = ClientPrefs.arrowHSV[noteData][0] / 360;
-			colorSwap.saturation = ClientPrefs.arrowHSV[noteData][1] / 100;
-			colorSwap.brightness = ClientPrefs.arrowHSV[noteData][2] / 100;
+			colorNote.hue = ClientPrefs.arrowHSV[noteData][0] / 360;
+			colorNote.saturation = ClientPrefs.arrowHSV[noteData][1] / 100;
+			colorNote.brightness = ClientPrefs.arrowHSV[noteData][2] / 100;
 		}
+
+
 
 		if(noteData > -1 && noteType != value) {
 			switch(value) {
@@ -146,9 +149,9 @@ class Note extends FlxSprite
 					ignoreNote = mustPress;
 					reloadNote('HURT');
 					noteSplashTexture = 'HURTnoteSplashes';
-					colorSwap.hue = 0;
-					colorSwap.saturation = 0;
-					colorSwap.brightness = 0;
+					colorNote.hue = 0;
+					colorNote.saturation = 0;
+					colorNote.brightness = 0;
 					lowPriority = true;
 
 					if(isSustainNote) {
@@ -165,11 +168,51 @@ class Note extends FlxSprite
 				case 'GF Sing':
 					gfNote = true;
 			}
+			if ((FlxG.state is PlayState))
+			{
+				PlayState.instance.callOnHaxes('onNoteType', [value]);
+				PlayState.instance.callOnHaxes('noteType', [value]);
+				PlayState.instance.callOnHaxes('set_noteType', [value]);
+
+				PlayState.instance.setOnHaxes('note', this);
+				
+
+				PlayState.instance.setOnHaxes('texture', texture);
+				PlayState.instance.setOnHaxes('style', style);
+
+				PlayState.instance.setOnHaxes('canBeHit', canBeHit);
+				PlayState.instance.setOnHaxes('tooLate', tooLate);
+				PlayState.instance.setOnHaxes('wasGoodHit', wasGoodHit);
+				PlayState.instance.setOnHaxes('ignoreNote', ignoreNote);
+				PlayState.instance.setOnHaxes('hitByOpponent', hitByOpponent);
+				PlayState.instance.setOnHaxes('earlyHitMult', earlyHitMult);
+				PlayState.instance.setOnHaxes('gfNote', gfNote);
+				PlayState.instance.setOnHaxes('animSuffix', animSuffix);
+				PlayState.instance.setOnHaxes('noAnimation', noAnimation);
+				PlayState.instance.setOnHaxes('noMissAnimation', noMissAnimation);
+				PlayState.instance.setOnHaxes('hitCausesMiss', hitCausesMiss);
+				PlayState.instance.setOnHaxes('hitHealth', hitHealth);
+				PlayState.instance.setOnHaxes('missHealth', missHealth);
+				PlayState.instance.setOnHaxes('colorNote', colorNote);
+				
+
+				PlayState.instance.setOnHaxes('offsetX', offsetX);
+				PlayState.instance.setOnHaxes('offsetY', offsetY);
+				PlayState.instance.setOnHaxes('copyAngle', copyAngle);
+				PlayState.instance.setOnHaxes('copyAlpha', copyAlpha);
+				PlayState.instance.setOnHaxes('multAlpha', multAlpha);
+				PlayState.instance.setOnHaxes('multSpeed', multSpeed);
+				PlayState.instance.setOnHaxes('noteSplashDisabled', noteSplashDisabled);
+				PlayState.instance.setOnHaxes('noteSplashTexture', noteSplashTexture);
+				PlayState.instance.setOnHaxes('noteSplashHue', noteSplashHue);
+				PlayState.instance.setOnHaxes('noteSplashSat', noteSplashSat);
+				PlayState.instance.setOnHaxes('noteSplashBrt', noteSplashBrt);
+			}
 			noteType = value;
 		}
-		noteSplashHue = colorSwap.hue;
-		noteSplashSat = colorSwap.saturation;
-		noteSplashBrt = colorSwap.brightness;
+		noteSplashHue = colorNote.hue;
+		noteSplashSat = colorNote.saturation;
+		noteSplashBrt = colorNote.brightness;
 		return value;
 	}
 
@@ -194,8 +237,8 @@ class Note extends FlxSprite
 
 		if(noteData > -1) {
 			texture = '';
-			colorSwap = new ColorSwap();
-			shader = colorSwap.shader;
+			colorNote = new ColorSwap();
+			shader = colorNote.shader;
 
 			x += swagWidth * (noteData);
 			if(!isSustainNote && noteData > -1 && noteData < 4) { //Doing this 'if' check to fix the warnings on Senpai songs
@@ -224,9 +267,11 @@ class Note extends FlxSprite
 
 			updateHitbox();
 
-			offsetX -= width / 2;
+			
 
-			if (PlayState.isPixelStage)
+			if (style != 'pixel')
+				offsetX -= width / 2;
+			else
 				offsetX += 30;
 
 			if (prevNote.isSustainNote)
@@ -239,7 +284,7 @@ class Note extends FlxSprite
 					prevNote.scale.y *= PlayState.instance.songSpeed;
 				}
 
-				if(PlayState.isPixelStage) {
+				if (style == 'pixel') {
 					prevNote.scale.y *= 1.19;
 					prevNote.scale.y *= (6 / height); //Auto adjust note size
 				}
@@ -247,7 +292,7 @@ class Note extends FlxSprite
 				// prevNote.setGraphicSize();
 			}
 
-			if(PlayState.isPixelStage) {
+			if (style == 'pixel') {
 				scale.y *= PlayState.daPixelZoom;
 				updateHitbox();
 			}
@@ -306,13 +351,6 @@ class Note extends FlxSprite
 					offsetX += lastNoteOffsetXForPixelAutoAdjusting;
 					lastNoteOffsetXForPixelAutoAdjusting = (width - 7) * (PlayState.daPixelZoom / 2);
 					offsetX -= lastNoteOffsetXForPixelAutoAdjusting;
-	
-					/*if(animName != null && !animName.endsWith('end'))
-					{
-						lastScaleY /= lastNoteScaleToo;
-						lastNoteScaleToo = (6 / height);
-						lastScaleY *= lastNoteScaleToo;
-					}*/
 				}
 			default:
 				frames = Paths.getSparrowAtlas(blahblah);
@@ -411,3 +449,4 @@ class Note extends FlxSprite
 		}
 	}
 }
+

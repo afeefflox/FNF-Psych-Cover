@@ -6,6 +6,10 @@
 				-26,
 				-12
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "deathConfirm",
 			"indices": [],
@@ -17,6 +21,10 @@
 				-30,
 				-12
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "deathLoop",
 			"indices": [],
@@ -25,6 +33,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -50,6 +62,10 @@
 	"camera_position": [
 		50,
 		-60
+	],
+	"playerCamera_position": [
+		0,
+		0
 	],
 	"sing_duration": 4,
 	"scale": 6

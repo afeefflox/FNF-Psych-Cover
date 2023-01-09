@@ -36,6 +36,7 @@ class ClientPrefs {
 	public static var hitsoundVolume:Float = 0;
 	public static var pauseMusic:String = 'Tea Time';
 	public static var checkForUpdates:Bool = true;
+	public static var ghostCharacter:Bool = true;
 	public static var comboStacking = true;
 	public static var gameplaySettings:Map<String, Dynamic> = [
 		'scrollspeed' => 1.0,
@@ -134,6 +135,7 @@ class ClientPrefs {
 		FlxG.save.data.pauseMusic = pauseMusic;
 		FlxG.save.data.checkForUpdates = checkForUpdates;
 		FlxG.save.data.comboStacking = comboStacking;
+		FlxG.save.data.ghostCharacter = ghostCharacter;
 	
 		FlxG.save.flush();
 
@@ -187,6 +189,9 @@ class ClientPrefs {
 		}
 		if(FlxG.save.data.camZooms != null) {
 			camZooms = FlxG.save.data.camZooms;
+		}
+		if(FlxG.save.data.ghostCharacter != null) {
+			ghostCharacter = FlxG.save.data.ghostCharacter;
 		}
 		if(FlxG.save.data.hideHud != null) {
 			hideHud = FlxG.save.data.hideHud;

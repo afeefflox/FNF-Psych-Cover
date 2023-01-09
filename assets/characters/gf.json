@@ -6,6 +6,10 @@
 				3,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "cheer",
 			"indices": [],
@@ -16,6 +20,10 @@
 			"offsets": [
 				0,
 				-19
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"fps": 24,
 			"anim": "singLEFT",
@@ -28,6 +36,10 @@
 				0,
 				-20
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "singDOWN",
 			"indices": [],
@@ -38,6 +50,10 @@
 			"offsets": [
 				0,
 				4
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"fps": 24,
 			"anim": "singUP",
@@ -50,6 +66,10 @@
 				0,
 				-20
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "singRIGHT",
 			"indices": [],
@@ -60,6 +80,10 @@
 			"offsets": [
 				-2,
 				-21
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"fps": 24,
 			"anim": "sad",
@@ -85,6 +109,10 @@
 			"offsets": [
 				0,
 				-9
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"fps": 24,
 			"anim": "danceLeft",
@@ -114,6 +142,10 @@
 				0,
 				-9
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "danceRight",
 			"indices": [
@@ -141,6 +173,10 @@
 				45,
 				-8
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "hairBlow",
 			"indices": [
@@ -156,6 +192,10 @@
 			"offsets": [
 				0,
 				-9
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"fps": 24,
 			"anim": "hairFall",
@@ -181,6 +221,10 @@
 				-2,
 				-17
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "scared",
 			"indices": [],
@@ -193,7 +237,14 @@
 		0,
 		0
 	],
+	"player_position": [
+		0,
+		0
+	],
 	"healthicon": "gf",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "normal",
 	"flip_x": false,
 	"healthbar_colors": [
 		165,
@@ -201,6 +252,10 @@
 		77
 	],
 	"camera_position": [
+		0,
+		0
+	],
+	"playerCamera_position": [
 		0,
 		0
 	],

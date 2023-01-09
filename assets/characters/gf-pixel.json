@@ -6,6 +6,10 @@
 				0,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "danceLeft",
 			"fps": 24,
 			"name": "GF IDLE",
@@ -31,6 +35,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -61,6 +69,10 @@
 				0,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singUP",
 			"fps": 24,
 			"name": "GF IDLE",
@@ -73,7 +85,14 @@
 		0,
 		0
 	],
+	"player_position": [
+		0,
+		0
+	],
 	"healthicon": "gf",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "normal",
 	"flip_x": false,
 	"healthbar_colors": [
 		165,
@@ -83,6 +102,10 @@
 	"camera_position": [
 		-20,
 		80
+	],
+	"playerCamera_position": [
+		0,
+		0
 	],
 	"sing_duration": 4,
 	"scale": 5.99999999999999

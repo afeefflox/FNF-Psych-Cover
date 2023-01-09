@@ -102,6 +102,9 @@ class ChartingState extends MusicBeatState
 		['Alt Idle Animation', "Sets a specified suffix after the idle animation name.\nYou can use this to trigger 'idle-alt' if you set\nValue 2 to -alt\n\nValue 1: Character to set (Dad, BF or GF)\nValue 2: New suffix (Leave it blank to disable)"],
 		['Screen Shake', "Value 1: Camera shake\nValue 2: HUD shake\n\nEvery value works as the following example: \"1, 0.05\".\nThe first number (1) is the duration.\nThe second number (0.05) is the intensity."],
 		['Change Character', "Value 1: Character to change (Dad, BF, GF)\nValue 2: New character's name"],
+		['Change Lua Character', "Value 1: Character to change (Dad, BF, GF)\nValue 2: New character's name"],
+		['Change Character to Sing', "Value 1: Strumline to change (Dad, BF)\nValue 2: Character to sing (Dad, BF, GF)"],
+		['Change Stage', "Value 1: New Stage name"],
 		['Change Scroll Speed', "Value 1: Scroll Speed Multiplier (1 is default)\nValue 2: Time it takes to change fully in seconds."],
 		['Set Property', "Value 1: Variable name\nValue 2: New value"]
 	];
@@ -1960,6 +1963,8 @@ class ChartingState extends MusicBeatState
 			}
 		}
 
+		
+
 		_song.bpm = tempBpm;
 
 		strumLineNotes.visible = quant.visible = vortex;
@@ -2065,8 +2070,72 @@ class ChartingState extends MusicBeatState
 			}
 		}
 		lastConductorPos = Conductor.songPosition;
+
+		//checkEventNote();
 		super.update(elapsed);
 	}
+
+	/*
+	function checkEventNote() {
+		while(curRenderedNotes.length > 0) {
+			if(curRenderedNotes.members[0].noteData == -1)
+			{
+				var leStrumTime:Float = curRenderedNotes.members[0].strumTime;
+				if(Conductor.songPosition < leStrumTime) {
+					break;
+				}
+
+				var value1:String = '';
+				if(curRenderedNotes.members[0].eventVal1 != null)
+					value1 = curRenderedNotes.members[0].eventVal1;
+	
+				var value2:String = '';
+				if(curRenderedNotes.members[0].eventVal2 != null)
+					value2 = curRenderedNotes.members[0].eventVal2;
+
+				triggerEventNote(curRenderedNotes.members[0].eventName, value1, value2);
+			}
+		}
+	}
+
+	function triggerEventNote(eventName:String, value1:String, value2:String) {
+		switch(eventName) {
+			case 'Change Character':
+				var charType:Int = 0;
+				switch(value1.toLowerCase().trim()) {
+					case 'dad' | 'opponent'|'1':
+						charType = 1;
+					case 'gf' | 'girlfriend'|'2':
+						charType = 2;
+					case 'bfflip' | 'boyfriendflip'|'3':
+						charType = 3;
+					case 'dadflip' | 'opponentflip'|'4':
+						charType = 4;
+					case 'boyfriend'|'bf'|''|'0':
+						charType = 0;
+				}
+
+				switch(charType) {
+					case 0|3:
+						var healthIconP1:String = loadHealthIconFromCharacter(value2);
+						if (_song.notes[curSec].mustHitSection)
+							leftIcon.changeIcon(healthIconP1);						
+						else
+							rightIcon.changeIcon(healthIconP1);
+					case 1|4:
+						var healthIconP2:String = loadHealthIconFromCharacter(value2);
+						if (_song.notes[curSec].mustHitSection)
+							rightIcon.changeIcon(healthIconP2);
+						else
+							leftIcon.changeIcon(healthIconP2);
+					case 2:
+						var healthIconP3:String = loadHealthIconFromCharacter(value2);
+						if (_song.notes[curSec].gfSection) 
+							leftIcon.changeIcon(healthIconP3);
+				}
+		}
+	}
+	*/
 
 	function updateZoom() {
 		var daZoom:Float = zoomList[curZoom];
@@ -2075,47 +2144,6 @@ class ChartingState extends MusicBeatState
 		zoomTxt.text = 'Zoom: ' + zoomThing;
 		reloadGridLayer();
 	}
-
-	/*
-	function loadAudioBuffer() {
-		if(audioBuffers[0] != null) {
-			audioBuffers[0].dispose();
-		}
-		audioBuffers[0] = null;
-		#if MODS_ALLOWED
-		if(FileSystem.exists(Paths.modFolders('songs/' + currentSongName + '/Inst.ogg'))) {
-			audioBuffers[0] = AudioBuffer.fromFile(Paths.modFolders('songs/' + currentSongName + '/Inst.ogg'));
-			//trace('Custom vocals found');
-		}
-		else { #end
-			var leVocals:String = Paths.getPath(currentSongName + '/Inst.' + Paths.SOUND_EXT, SOUND, 'songs');
-			if (OpenFlAssets.exists(leVocals)) { //Vanilla inst
-				audioBuffers[0] = AudioBuffer.fromFile('./' + leVocals.substr(6));
-				//trace('Inst found');
-			}
-		#if MODS_ALLOWED
-		}
-		#end
-
-		if(audioBuffers[1] != null) {
-			audioBuffers[1].dispose();
-		}
-		audioBuffers[1] = null;
-		#if MODS_ALLOWED
-		if(FileSystem.exists(Paths.modFolders('songs/' + currentSongName + '/Voices.ogg'))) {
-			audioBuffers[1] = AudioBuffer.fromFile(Paths.modFolders('songs/' + currentSongName + '/Voices.ogg'));
-			//trace('Custom vocals found');
-		} else { #end
-			var leVocals:String = Paths.getPath(currentSongName + '/Voices.' + Paths.SOUND_EXT, SOUND, 'songs');
-			if (OpenFlAssets.exists(leVocals)) { //Vanilla voices
-				audioBuffers[1] = AudioBuffer.fromFile('./' + leVocals.substr(6));
-				//trace('Voices found, LETS FUCKING GOOOO');
-			}
-		#if MODS_ALLOWED
-		}
-		#end
-	}
-	*/
 
 	var lastSecBeats:Float = 0;
 	var lastSecBeatsNext:Float = 0;
@@ -2672,6 +2700,18 @@ class ChartingState extends MusicBeatState
 				var note:Note = setupNoteData(i, true);
 				note.alpha = 0.6;
 				nextRenderedNotes.add(note);
+
+				var text:String = 'Event: ' + note.eventName + ' (' + Math.floor(note.strumTime) + ' ms)' + '\nValue 1: ' + note.eventVal1 + '\nValue 2: ' + note.eventVal2;
+				if(note.eventLength > 1) text = note.eventLength + ' Events:\n' + note.eventName;
+
+				var daText:AttachedFlxText = new AttachedFlxText(0, 0, 400, text, 12);
+				daText.setFormat(Paths.font("vcr.ttf"), 12, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE_FAST, FlxColor.BLACK);
+				daText.alpha = 0.6;
+				daText.xAdd = -410;
+				daText.borderSize = 1;
+				if(note.eventLength > 1) daText.yAdd += 8;
+				curRenderedNoteType.add(daText);
+				daText.sprTracker = note;
 			}
 		}
 	}

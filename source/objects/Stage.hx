@@ -12,7 +12,8 @@ import objects.TankmenBG;
 import meta.substate.GameOverSubstate;
 import meta.state.PlayState;
 import flixel.math.FlxMath;
-import util.FunkinLua;
+import util.script.*;
+import util.script.Globals.*;
 import flixel.FlxBasic;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.FlxG;
@@ -27,6 +28,8 @@ class Stage extends MusicBeatObject
     public var curStage:String;
     public static var instance:Stage;
 	public var luaArray:Array<FunkinLua> = [];
+	public var haxeArray:Array<FunkinHaxe> = [];
+
     public var layers:Map<String,FlxTypedGroup<FlxBasic>> = [
         "boyfriend"=>new FlxTypedGroup<FlxBasic>(), // stuff that should be layered infront of all characters, but below the foreground
         "dad"=>new FlxTypedGroup<FlxBasic>(), // stuff that should be layered infront of the dad and gf but below boyfriend and foreground
@@ -86,22 +89,10 @@ class Stage extends MusicBeatObject
         switch (curStage)
         {
 			default:
-				#if (MODS_ALLOWED && LUA_ALLOWED)
-				var doPush:Bool = false;
-				var luaFile:String = 'stages/' + curStage + '.lua';
-				if(FileSystem.exists(Paths.modFolders(luaFile))) {
-					luaFile = Paths.modFolders(luaFile);
-					doPush = true;
-				} else {
-					luaFile = Paths.getPreloadPath(luaFile);
-					if(FileSystem.exists(luaFile)) {
-						doPush = true;
-					}
-				}
-		
-				if(doPush)
-					luaArray.push(new FunkinLua(luaFile));
-				#end
+				startStageLua(curStage);
+				startStageHaxe(curStage);
+
+				callOnHaxes('onCreatePost', []);
 				callOnLuas('onCreatePost', []);
             case 'stage':
 				var bg:BGSprite = new BGSprite('stages/' + curStage + '/stageback', -600, -200, 0.9, 0.9);
@@ -401,12 +392,12 @@ class Stage extends MusicBeatObject
 				moveTank();
 
 				foregroundSprites = new FlxTypedGroup<BGSprite>();
-				foregroundSprites.add(new BGSprite('tank0', -500, 650, 1.7, 1.5, ['fg']));
-				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('tank1', -300, 750, 2, 0.2, ['fg']));
-				foregroundSprites.add(new BGSprite('tank2', 450, 940, 1.5, 1.5, ['foreground']));
+				foregroundSprites.add(new BGSprite('stages/' + curStage + '/tank0', -500, 650, 1.7, 1.5, ['fg']));
+				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('stages/' + curStage + '/tank1', -300, 750, 2, 0.2, ['fg']));
+				foregroundSprites.add(new BGSprite('stages/' + curStage + '/tank2', 450, 940, 1.5, 1.5, ['foreground']));
 				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('tank4', 1300, 900, 1.5, 1.5, ['fg']));
-				foregroundSprites.add(new BGSprite('tank5', 1620, 700, 1.5, 1.5, ['fg']));
-				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('tank3', 1300, 1200, 3.5, 2.5, ['fg']));
+				foregroundSprites.add(new BGSprite('stages/' + curStage + '/tank5', 1620, 700, 1.5, 1.5, ['fg']));
+				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('stages/' + curStage + '/tank3', 1300, 1200, 3.5, 2.5, ['fg']));
 
                 layers.get('boyfriend').add(foregroundSprites);
         }
@@ -415,7 +406,11 @@ class Stage extends MusicBeatObject
     override public function update(elapsed:Float)
     {
 		super.update(elapsed);
+		
+		callOnHaxes('update', [elapsed]);
 		callOnLuas('onUpdate', [elapsed]);
+		
+
         switch (curStage)
         {
 			case 'tank':
@@ -545,8 +540,70 @@ class Stage extends MusicBeatObject
 					}
 				}            
         }
+		callOnHaxes('updatePost', [elapsed]);
 		callOnLuas('onUpdatePost', [elapsed]);
     }
+
+	public function startStageLua(name:String)
+	{
+		#if LUA_ALLOWED
+		var doPush:Bool = false;
+		var luaFile:String = 'stages/' + name + '.lua';
+		#if MODS_ALLOWED
+		if(FileSystem.exists(Paths.modFolders(luaFile))) {
+			luaFile = Paths.modFolders(luaFile);
+			doPush = true;
+		} else {
+			luaFile = Paths.getPreloadPath(luaFile);
+			if(FileSystem.exists(luaFile)) {
+				doPush = true;
+			}
+		}
+		#else
+		luaFile = Paths.getPreloadPath(luaFile);
+		if(Assets.exists(luaFile)) {
+			doPush = true;
+		}
+		#end
+
+		if(doPush)
+		{
+			for (script in luaArray)
+			{
+				if(script.scriptName == luaFile) return;
+			}
+			luaArray.push(new FunkinLua(luaFile, true));
+		}
+		#end		
+	}
+
+	
+	public function startStageHaxe(name:String)
+	{
+		var doPush:Bool = false;
+		var luaFile:String = 'stages/' + name + '.hx';
+		#if MODS_ALLOWED
+		if(FileSystem.exists(Paths.modFolders(luaFile))) {
+			luaFile = Paths.modFolders(luaFile);
+			doPush = true;
+		} else {
+			luaFile = Paths.getPreloadPath(luaFile);
+			if(FileSystem.exists(luaFile)) {
+				doPush = true;
+			}
+		}
+		#else
+		luaFile = Paths.getPreloadPath(luaFile);
+		if(Assets.exists(luaFile)) {
+			doPush = true;
+		}
+		#end
+
+		if(doPush)
+		{
+			haxeArray.push(new FunkinHaxe(luaFile, true));
+		}
+	}
 
 	var lastStepHit:Int = -1;
 	override function stepHit()
@@ -558,7 +615,10 @@ class Stage extends MusicBeatObject
 
 		lastStepHit = curStep;
 		setOnLuas('curStep', curStep);
+		setOnHaxes('curStep', curStep);
+
 		callOnLuas('onStepHit', []);
+		callOnHaxes('stepHit', []);
 	}
 
 	var lastBeatHit:Int = -1;
@@ -626,7 +686,10 @@ class Stage extends MusicBeatObject
         }
 
 		setOnLuas('curBeat', curBeat);
+		setOnHaxes('curBeat', curBeat);
+
 		callOnLuas('onBeatHit', []);
+		callOnHaxes('beatHit', []);
     }
 
     function lightningStrikeShit():Void
@@ -782,52 +845,15 @@ class Stage extends MusicBeatObject
 		}
 		luaArray = [];
 
-		if(PlayState.instance.boyfriendGroup != null)
-		{
-			var i:Int = PlayState.instance.boyfriendGroup.members.length-1;
-			while(i >= 0) {
-				var memb:FlxSprite = PlayState.instance.boyfriendGroup.members[i];
-				//Avoid for Character...
-				if(memb != null && !Std.isOfType(memb, Character)) {
-					memb.kill();
-					PlayState.instance.boyfriendGroup.remove(memb);
-					memb.destroy();
-				}
-				--i;
-			}
+		for (lua in haxeArray) {
+			lua.call('onDestroy', []);
+			lua.call('destroy', []);
+			lua.stop();
 		}
-
-		if(PlayState.instance.gfGroup != null)
-		{
-			var i:Int = PlayState.instance.gfGroup.members.length-1;
-			while(i >= 0) {
-				var memb:FlxSprite = PlayState.instance.gfGroup.members[i];
-				//Avoid for Character...
-				if(memb != null && !Std.isOfType(memb, Character)) {
-					memb.kill();
-					PlayState.instance.gfGroup.remove(memb);
-					memb.destroy();
-				}
-				--i;
-			}
-		}
-
-		if(PlayState.instance.dadGroup != null)
-		{
-			var i:Int = PlayState.instance.dadGroup.members.length-1;
-			while(i >= 0) {
-				var memb:FlxSprite = PlayState.instance.dadGroup.members[i];
-				//Avoid for Character...
-				if(memb != null && !Std.isOfType(memb, Character)) {
-					memb.kill();
-					PlayState.instance.dadGroup.remove(memb);
-					memb.destroy();
-				}
-				--i;
-			}
-		}
+		haxeArray = [];
 	}
 
+	
 	public function callOnLuas(event:String, args:Array<Dynamic>, ignoreStops = true, exclusions:Array<String> = null):Dynamic {
 		var returnVal:Dynamic = FunkinLua.Function_Continue;
 		#if LUA_ALLOWED
@@ -851,11 +877,38 @@ class Stage extends MusicBeatObject
 		return returnVal;
 	}
 
+	public function callOnHaxes(event:String, args:Array<Dynamic>, ignoreStops = true, exclusions:Array<String> = null):Dynamic {
+		var returnVal:Dynamic = FunkinHaxe.Function_Continue;
+		if(exclusions == null) exclusions = [];
+		for (script in haxeArray) {
+			if(exclusions.contains(script.scriptName))
+				continue;
+
+			var ret:Dynamic = script.call(event, args);
+			if(ret == FunkinHaxe.Function_StopHaxe && !ignoreStops)
+				break;
+			
+			// had to do this because there is a bug in haxe where Stop != Continue doesnt work
+			var bool:Bool = ret == FunkinHaxe.Function_Continue;
+			if(!bool && ret != 0) {
+				returnVal = cast ret;
+			}
+		}
+		//trace(event, returnVal);
+		return FunkinHaxe.Function_Continue;
+	}
+
 	public function setOnLuas(variable:String, arg:Dynamic) {
 		#if LUA_ALLOWED
 		for (i in 0...luaArray.length) {
 			luaArray[i].set(variable, arg);
 		}
 		#end
+	}
+
+	public function setOnHaxes(variable:String, arg:Dynamic) {
+		for (i in 0...haxeArray.length) {
+			haxeArray[i].set(variable, arg);
+		}
 	}
 }

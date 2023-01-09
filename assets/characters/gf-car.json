@@ -6,6 +6,10 @@
 				2,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singUP",
 			"fps": 24,
 			"name": "GF Dancing Beat Hair blowing CAR",
@@ -14,6 +18,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -41,6 +49,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -73,7 +85,14 @@
 		0,
 		0
 	],
+	"player_position": [
+		0,
+		0
+	],
 	"healthicon": "gf",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "normal",
 	"flip_x": false,
 	"healthbar_colors": [
 		165,
@@ -81,6 +100,10 @@
 		77
 	],
 	"camera_position": [
+		0,
+		0
+	],
+	"playerCamera_position": [
 		0,
 		0
 	],

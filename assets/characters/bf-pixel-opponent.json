@@ -6,6 +6,10 @@
 				2,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "idle",
 			"indices": [],
@@ -14,6 +18,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -28,6 +36,10 @@
 				0,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singUP",
 			"fps": 24,
 			"name": "BF UP NOTE",
@@ -36,6 +48,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -50,6 +66,10 @@
 				0,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singDOWNmiss",
 			"fps": 24,
 			"name": "BF DOWN MISS",
@@ -58,6 +78,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -72,6 +96,10 @@
 				0,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singRIGHTmiss",
 			"fps": 24,
 			"name": "BF LEFT MISS",
@@ -83,6 +111,10 @@
 				0,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singLEFTmiss",
 			"fps": 24,
 			"name": "BF RIGHT MISS",
@@ -91,6 +123,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -107,6 +143,9 @@
 		480
 	],
 	"healthicon": "bf-pixel",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "pixel",
 	"flip_x": true,
 	"healthbar_colors": [
 		123,
@@ -116,6 +155,10 @@
 	"camera_position": [
 		50,
 		-160
+	],
+	"playerCamera_position": [
+		0,
+		0
 	],
 	"sing_duration": 4,
 	"scale": 6.8

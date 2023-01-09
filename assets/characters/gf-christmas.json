@@ -6,6 +6,10 @@
 				1,
 				0
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "cheer",
 			"fps": 24,
 			"name": "GF Cheer",
@@ -16,6 +20,10 @@
 			"offsets": [
 				0,
 				-19
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"anim": "singLEFT",
 			"fps": 24,
@@ -28,6 +36,10 @@
 				0,
 				-20
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singDOWN",
 			"fps": 24,
 			"name": "GF Down Note",
@@ -38,6 +50,10 @@
 			"offsets": [
 				0,
 				4
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"anim": "singUP",
 			"fps": 24,
@@ -50,6 +66,10 @@
 				0,
 				-20
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singRIGHT",
 			"fps": 24,
 			"name": "GF Right Note",
@@ -60,6 +80,10 @@
 			"offsets": [
 				-2,
 				-21
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"anim": "sad",
 			"fps": 24,
@@ -85,6 +109,10 @@
 			"offsets": [
 				0,
 				-9
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"anim": "danceLeft",
 			"fps": 24,
@@ -114,6 +142,10 @@
 				0,
 				-9
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "danceRight",
 			"fps": 24,
 			"name": "GF Dancing Beat",
@@ -141,6 +173,10 @@
 				0,
 				-9
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "hairFall",
 			"fps": 24,
 			"name": "GF Dancing Beat Hair Landing",
@@ -165,6 +201,10 @@
 				-2,
 				-17
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "scared",
 			"fps": 24,
 			"name": "GF FEAR",
@@ -177,7 +217,14 @@
 		0,
 		0
 	],
+	"player_position": [
+		0,
+		0
+	],
 	"healthicon": "gf",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "normal",
 	"flip_x": false,
 	"healthbar_colors": [
 		165,
@@ -185,6 +232,10 @@
 		77
 	],
 	"camera_position": [
+		0,
+		0
+	],
+	"playerCamera_position": [
 		0,
 		0
 	],

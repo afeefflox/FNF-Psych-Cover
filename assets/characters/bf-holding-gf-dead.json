@@ -5,6 +5,10 @@
 				37,
 				-3
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"indices": [],
 			"fps": 24,
 			"anim": "deathLoop",
@@ -16,6 +20,10 @@
 				37,
 				14
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"indices": [],
 			"fps": 24,
 			"anim": "firstDeath",
@@ -26,6 +34,10 @@
 			"offsets": [
 				37,
 				28
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"indices": [],
 			"fps": 24,
@@ -41,6 +53,9 @@
 		350
 	],
 	"healthicon": "bf",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "normal",
 	"flip_x": true,
 	"healthbar_colors": [
 		49,
@@ -48,6 +63,10 @@
 		209
 	],
 	"camera_position": [
+		0,
+		0
+	],
+	"playerCamera_position": [
 		0,
 		0
 	],

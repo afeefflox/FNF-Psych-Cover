@@ -5,6 +5,10 @@
 				-218,
 				-280
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "idle",
 			"fps": 24,
@@ -15,6 +19,10 @@
 			"offsets": [
 				-200,
 				-280
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"loop": false,
 			"anim": "singLEFT",
@@ -27,6 +35,10 @@
 				170,
 				110
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "singDOWN",
 			"fps": 24,
@@ -38,6 +50,10 @@
 				-220,
 				-280
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"loop": false,
 			"anim": "singRIGHT",
 			"fps": 24,
@@ -48,6 +64,10 @@
 			"offsets": [
 				-220,
 				-240
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"loop": false,
 			"anim": "singUP",
@@ -62,7 +82,14 @@
 		-150,
 		100
 	],
+	"player_position": [
+		0,
+		0
+	],
 	"healthicon": "spirit-pixel",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "pixel",
 	"flip_x": false,
 	"healthbar_colors": [
 		255,
@@ -70,6 +97,10 @@
 		110
 	],
 	"camera_position": [
+		0,
+		0
+	],
+	"playerCamera_position": [
 		0,
 		0
 	],

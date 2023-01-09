@@ -1,6 +1,5 @@
 package objects;
 
-import util.CoolUtil;
 import meta.state.PlayState;
 import animateatlas.AtlasFrameMaker;
 import flixel.FlxG;
@@ -55,7 +54,7 @@ typedef AnimArray = {
 	var offsets_player:Array<Int>;
 }
 
-class Character extends FNFSprite
+class Character extends FlxSprite
 {
 	public var animOffsets:Map<String, Array<Dynamic>>;
 	public var animOffsetsPlayer:Map<String, Array<Dynamic>>;
@@ -157,7 +156,42 @@ class Character extends FNFSprite
 				#end
 
 				var json:CharacterFile = cast Json.parse(rawJson);
-				frames = CoolUtil.loadFrames(json.image);
+				var spriteType = "sparrow";
+				
+				//sparrow
+				//packer
+				//texture
+				//json
+				if (Paths.fileExists('images/' + json.image + '/.txt', TEXT))
+				{
+					spriteType = "packer";
+				}
+
+				if (Paths.fileExists('images/' + json.image + '/Animation.json', TEXT))
+				{
+					spriteType = "texture";
+				}
+
+				if (Paths.fileExists('images/' + json.image + '/.json', TEXT))
+				{
+					spriteType = "json";
+				}
+
+
+				switch (spriteType){
+					
+					case "packer":
+						frames = Paths.getPackerAtlas(json.image);
+					
+					case "sparrow":
+						frames = Paths.getSparrowAtlas(json.image);
+					
+					case "texture":
+						frames = AtlasFrameMaker.construct(json.image);
+
+					case "json":
+						frames = Paths.getTexturePackerAtlas(json.image);
+				}
 				imageFile = json.image;
 
 				if(json.scale != 1) {
@@ -219,20 +253,10 @@ class Character extends FNFSprite
 						var animFps:Int = anim.fps;
 						var animLoop:Bool = !!anim.loop; //Bruh
 						var animIndices:Array<Int> = anim.indices;
-						if (animateAtlas != null) {
-							if(animIndices != null && animIndices.length > 0) {
-								animateAtlas.anim.addBySymbolIndices(animAnim, animName, animIndices, animFps, animLoop);
-							} else {
-								animateAtlas.anim.addBySymbol(animAnim, animName, animFps, animLoop);
-							}
-						}
-						else
-						{
-							if(animIndices != null && animIndices.length > 0) {
-								animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
-							} else {
-								animation.addByPrefix(animAnim, animName, animFps, animLoop);
-							}
+						if(animIndices != null && animIndices.length > 0) {
+							animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
+						} else {
+							animation.addByPrefix(animAnim, animName, animFps, animLoop);
 						}
 
 						if(isPlayer)
@@ -294,7 +318,7 @@ class Character extends FNFSprite
 		];
 		for (pair in animations) {
 			// should always be in groups of two
-			if (existsAnimation(pair[0]) && existsAnimation(pair[1])) {
+			if (animation.getByName(pair[0]) != null && animation.getByName(pair[1]) != null) {
 				var firstAnim = animation.getByName(pair[0]).frames;
 				var secondAnim = animation.getByName(pair[1]).frames;
 				animation.getByName(pair[0]).frames = secondAnim;
@@ -306,21 +330,21 @@ class Character extends FNFSprite
 
 	override function update(elapsed:Float)
 	{
-		if(!debugMode)
+		if(!debugMode && animation.curAnim != null)
 		{
 			if(heyTimer > 0)
 			{
 				heyTimer -= elapsed * PlayState.instance.playbackRate;
 				if(heyTimer <= 0)
 				{
-					if(specialAnim && getAnimName() == 'hey' || getAnimName() == 'cheer')
+					if(specialAnim && animation.curAnim.name == 'hey' || animation.curAnim.name == 'cheer')
 					{
 						specialAnim = false;
 						dance();
 					}
 					heyTimer = 0;
 				}
-			} else if(specialAnim && isAnimFinished())
+			} else if(specialAnim && animation.curAnim.finished)
 			{
 				specialAnim = false;
 				dance();
@@ -341,7 +365,7 @@ class Character extends FNFSprite
 					if(animation.curAnim.finished) playAnim(animation.curAnim.name, false, false, animation.curAnim.frames.length - 3);
 			}
 
-			if (getAnimName().startsWith('sing'))
+			if (animation.curAnim.name.startsWith('sing'))
 			{
 				holdTimer += elapsed;
 			}
@@ -350,7 +374,7 @@ class Character extends FNFSprite
 
 			if(isPlayer)
 			{
-				if (getAnimName().endsWith('miss') && isAnimFinished() && !debugMode)
+				if (animation.curAnim.name.endsWith('miss') && animation.curAnim.finished && !debugMode)
 				{
 					if(danceIdle)
 						playAnim('idle', true, false, 10);
@@ -359,15 +383,15 @@ class Character extends FNFSprite
 					
 				}
 		
-				if (getAnimName() == 'firstDeath' && isAnimFinished() && startedDeath)
+				if (animation.curAnim.name == 'firstDeath' && animation.curAnim.finished && startedDeath)
 				{
 					playAnim('deathLoop');
 				}
 			}
 
-			if(isAnimFinished() && existsAnimation(getAnimName() + '-loop'))
+			if(animation.curAnim.finished && animation.getByName(animation.curAnim.name + '-loop') != null)
 			{
-				playAnim(getAnimName() + '-loop');
+				playAnim(animation.curAnim.name + '-loop');
 			}
 		}
 		super.update(elapsed);
@@ -391,7 +415,7 @@ class Character extends FNFSprite
 				else
 					playAnim('danceLeft' + idleSuffix);
 			}
-			else if(existsAnimation('idle' + idleSuffix)) {
+			else if(animation.getByName('idle' + idleSuffix) != null) {
 					playAnim('idle' + idleSuffix);
 			}
 		}
@@ -411,10 +435,11 @@ class Character extends FNFSprite
 		return animOffsets.exists(AnimName);
 	}
 
-	public override function playAnim(AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0):Void
+	public function playAnim(AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0):Void
 	{
 		specialAnim = false;
-		super.playAnim(AnimName, Force, Reversed, Frame);
+		animation.play(AnimName, Force, Reversed, Frame);
+
 		var daOffset = getOffsets(AnimName);
 		if (existsOffsets(AnimName))
 		{
@@ -462,7 +487,7 @@ class Character extends FNFSprite
 	private var settingCharacterUp:Bool = true;
 	public function recalculateDanceIdle() {
 		var lastDanceIdle:Bool = danceIdle;
-		danceIdle = (existsAnimation('danceLeft' + idleSuffix) && existsAnimation('danceRight' + idleSuffix));
+		danceIdle = (animation.getByName('danceLeft' + idleSuffix) != null && animation.getByName('danceRight' + idleSuffix) != null);
 
 		if(settingCharacterUp)
 		{

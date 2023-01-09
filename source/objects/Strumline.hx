@@ -14,6 +14,152 @@ import flixel.util.FlxSort;
 import meta.state.PlayState;
 import objects.Character;
 
+class FakerNote extends FlxSprite {
+	private var noteData:Int = 0;
+
+	public var texture(default, set):String = null;
+	public var style(default, set):String = null;
+	public var isSustainNote:Bool = false;
+
+	public static var PURP_NOTE:Int = 0;
+	public static var GREEN_NOTE:Int = 2;
+	public static var BLUE_NOTE:Int = 1;
+	public static var RED_NOTE:Int = 3;
+	
+	private function set_texture(value:String):String {
+		if(texture != value) {
+			texture = value;
+			reloadNote();
+		}
+		return value;
+	}
+
+	private function set_style(value:String):String {
+		if(style != value) {
+			style = value;
+			reloadNote();
+		}
+		return value;
+	}
+
+	public function new(x:Float, y:Float, leData:Int, ?arrowSkin:String, ?arrowStyle:String, ?sustainNote:Bool = false) {
+		noteData = leData;
+		this.noteData = leData;
+		isSustainNote = sustainNote;
+		this.isSustainNote = sustainNote;
+
+		super(x, y);
+
+		var skin:String = 'NOTE_assets';
+		if(arrowSkin != null && arrowSkin.length > 1) skin = arrowSkin;
+		if(arrowSkin == null) arrowSkin = 'NOTE_assets';
+
+		var styleStuff:String = 'normal';
+		if(arrowStyle != null && arrowStyle.length > 1) styleStuff = arrowStyle;
+		if(arrowStyle == null) arrowStyle = 'normal';
+		texture = skin; //Load texture and anims
+		style = styleStuff;
+
+		scrollFactor.set();
+	}
+
+	public function reloadNote()
+	{
+		var lastAnim:String = null;
+		if(animation.curAnim != null) lastAnim = animation.curAnim.name;
+
+		switch(style)
+		{
+			case 'pixel':
+				if(isSustainNote) {
+					loadGraphic(Paths.image('pixelUI/' + texture + 'ENDS'));
+					width = width / 4;
+					height = height / 2;
+					loadGraphic(Paths.image('pixelUI/' + texture + 'ENDS'), true, Math.floor(width), Math.floor(height));
+				} else {
+					loadGraphic(Paths.image('pixelUI/' + texture));
+					width = width / 4;
+					height = height / 5;
+					loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+				}
+
+				loadGraphic(Paths.image('pixelUI/' + texture));
+				width = width / 4;
+				height = height / 5;
+				loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+	
+				antialiasing = false;
+				setGraphicSize(Std.int(width * 6));
+	
+				animation.add('green', [GREEN_NOTE + 4]);
+				animation.add('red', [RED_NOTE + 4]);
+				animation.add('blue', [BLUE_NOTE + 4]);
+				animation.add('purple', [PURP_NOTE + 4]);
+				switch (Math.abs(noteData) % 4)
+				{
+					case 0:
+						animation.add('static', [PURP_NOTE + 4]);
+						animation.add('sustain', [PURP_NOTE]);
+						animation.add('sustainEND', [PURP_NOTE + 4]);
+					case 1:
+						animation.add('static', [BLUE_NOTE + 4]);
+						animation.add('sustain', [BLUE_NOTE]);
+						animation.add('sustainEND', [BLUE_NOTE + 4]);
+					case 2:
+						animation.add('static', [GREEN_NOTE + 4]);
+						animation.add('sustain', [GREEN_NOTE]);
+						animation.add('sustainEND', [GREEN_NOTE + 4]);
+					case 3:
+						animation.add('static', [RED_NOTE + 4]);
+						animation.add('sustain', [RED_NOTE]);
+						animation.add('sustainEND', [RED_NOTE + 4]);
+				}
+			default:
+				frames = Paths.getSparrowAtlas(texture);
+				animation.addByPrefix('green', 'green');
+				animation.addByPrefix('blue', 'blue');
+				animation.addByPrefix('purple', 'purple');
+				animation.addByPrefix('red', 'red');
+	
+				antialiasing = ClientPrefs.globalAntialiasing;
+				setGraphicSize(Std.int(width * 0.7));
+	
+				switch (Math.abs(noteData) % 4)
+				{
+					case 0:
+						animation.addByPrefix('static', 'purple0');
+						animation.addByPrefix('sustain', 'purple hold piece', 24, false);
+						animation.addByPrefix('sustainEND', 'pruple end hold', 24, false);
+					case 1:
+						animation.addByPrefix('static', 'blue0');
+						animation.addByPrefix('sustain', 'blue hold piece', 24, false);
+						animation.addByPrefix('sustainEND', 'blue hold end', 24, false);
+					case 2:
+						animation.addByPrefix('static', 'green0');
+						animation.addByPrefix('sustain', 'green hold piece', 24, false);
+						animation.addByPrefix('sustainEND', 'green hold end', 24, false);
+					case 3:
+						animation.addByPrefix('static', 'red0');
+						animation.addByPrefix('sustain', 'red hold piece', 24, false);
+						animation.addByPrefix('sustainEND', 'red hold end', 24, false);
+				}
+		}
+
+		updateHitbox();
+
+		if(lastAnim != null)
+		{
+			playAnim(lastAnim, true);
+		}
+	}
+
+	public function playAnim(anim:String, ?force:Bool = false) {
+		animation.play(anim, force);
+		centerOffsets();
+		centerOrigin();
+	}
+}
+
 class StaticNote extends FlxSprite {
     private var colorSwap:ColorSwap;
 	public var resetAnim:Float = 0;
@@ -24,6 +170,7 @@ class StaticNote extends FlxSprite {
 	public var direction:Float = 90;//plan on doing scroll directions soon -bb
 	public var downScroll:Bool = false;//plan on doing scroll directions soon -bb
 	public var sustainReduce:Bool = true;
+	public var debugMode:Bool = false;
 
     public var texture(default, set):String = null;
 	public var style(default, set):String = null;
@@ -65,6 +212,16 @@ class StaticNote extends FlxSprite {
 
     public function reloadNote()
 	{
+
+		if ((FlxG.state is PlayState))
+		{
+			PlayState.instance.callOnHaxes('reloadNote', []);
+			PlayState.instance.callOnHaxes('onReloadNote', []);
+			PlayState.instance.setOnHaxes('StaticArrow', this);
+			PlayState.instance.setOnHaxes('noteData', noteData);
+			PlayState.instance.setOnHaxes('style', style);
+			PlayState.instance.setOnHaxes('texture', texture);
+		}
 		var lastAnim:String = null;
 		if(animation.curAnim != null) lastAnim = animation.curAnim.name;
 
@@ -142,18 +299,20 @@ class StaticNote extends FlxSprite {
 	}
 
     override function update(elapsed:Float) {
-		if(resetAnim > 0) {
-			resetAnim -= elapsed;
-			if(resetAnim <= 0) {
-				playAnim('static');
-				resetAnim = 0;
+		if(!debugMode)
+		{
+			if(resetAnim > 0) {
+				resetAnim -= elapsed;
+				if(resetAnim <= 0) {
+					playAnim('static');
+					resetAnim = 0;
+				}
+			}
+			
+			if(animation.curAnim.name == 'confirm' && style != 'pixel') {
+				centerOrigin();
 			}
 		}
-		
-		if(animation.curAnim.name == 'confirm' && style != 'pixel') {
-			centerOrigin();
-		}
-
 		alpha = daAlpha * alphaM * alphaModchart;
 		super.update(elapsed);
 	}
@@ -162,19 +321,68 @@ class StaticNote extends FlxSprite {
 		animation.play(anim, force);
 		centerOffsets();
 		centerOrigin();
-		if(animation.curAnim == null || animation.curAnim.name == 'static') {
-			colorSwap.hue = 0;
-			colorSwap.saturation = 0;
-			colorSwap.brightness = 0;
-		} else {
-			colorSwap.hue = ClientPrefs.arrowHSV[noteData % 4][0] / 360;
-			colorSwap.saturation = ClientPrefs.arrowHSV[noteData % 4][1] / 100;
-			colorSwap.brightness = ClientPrefs.arrowHSV[noteData % 4][2] / 100;
-
-			if(animation.curAnim.name == 'confirm' && style != 'pixel') {
-				centerOrigin();
+		if(!debugMode)
+		{
+			if(animation.curAnim == null || animation.curAnim.name == 'static') {
+				colorSwap.hue = 0;
+				colorSwap.saturation = 0;
+				colorSwap.brightness = 0;
+			} else {
+				colorSwap.hue = ClientPrefs.arrowHSV[noteData % 4][0] / 360;
+				colorSwap.saturation = ClientPrefs.arrowHSV[noteData % 4][1] / 100;
+				colorSwap.brightness = ClientPrefs.arrowHSV[noteData % 4][2] / 100;
+	
+				if(animation.curAnim.name == 'confirm' && style != 'pixel') {
+					centerOrigin();
+				}
 			}
 		}
+	}
+}
+
+
+
+class FakeStrumline extends FlxTypedGroup<FlxBasic>
+{
+	public var receptors:FlxTypedGroup<StaticNote>;
+	public function new(x:Float = 0, ?character:Character, arrowSkin:String, arrowStyle:String, ?keyAmount:Int = 4, ?parent:Strumline)
+	{
+		super();
+		receptors = new FlxTypedGroup<StaticNote>();
+		for (i in 0...keyAmount)
+        {
+            var babyArrow:StaticNote = new StaticNote(-25 + x, 25, i, arrowSkin, arrowStyle);
+			babyArrow.downScroll = false;
+            babyArrow.x += Note.swagWidth * i;
+            babyArrow.x += 50;
+			babyArrow.debugMode = true;
+            babyArrow.x -= ((keyAmount / 2) * Note.swagWidth);
+            babyArrow.ID = i;
+            receptors.add(babyArrow);
+            babyArrow.playAnim('static');
+        }
+		add(receptors);
+	}
+}
+
+class FakeNotes extends FlxTypedGroup<FlxBasic>
+{
+	public var receptors:FlxTypedGroup<FakerNote>;
+	public function new(x:Float = 0, y:Float, ?character:Character, arrowSkin:String, arrowStyle:String, ?keyAmount:Int = 4, ?parent:Strumline)
+	{
+		super();
+		receptors = new FlxTypedGroup<FakerNote>();
+		for (i in 0...keyAmount)
+        {
+            var babyArrow:FakerNote = new FakerNote(-25 + x, 25 + y, i, arrowSkin, arrowStyle);
+            babyArrow.x += Note.swagWidth * i;
+            babyArrow.x += 50;
+            babyArrow.x -= ((keyAmount / 2) * Note.swagWidth);
+            babyArrow.ID = i;
+            receptors.add(babyArrow);
+            babyArrow.playAnim('static');
+        }
+		add(receptors);
 	}
 }
 
@@ -186,10 +394,11 @@ class Strumline extends FlxTypedGroup<FlxBasic>
 	public var allNotes:FlxTypedGroup<Note>;
 
     public var autoplay:Bool = true;
+	public var debugMode:Bool = false;
+	public var visibleArrow:Bool = true;
 	public var character:Character;
-	public var playState:PlayState;
 
-    public function new(x:Float = 0, playState:PlayState, ?character:Character, arrowSkin:String, arrowStyle:String, ?autoplay:Bool = true, ?keyAmount:Int = 4, ?parent:Strumline)
+    public function new(x:Float = 0, ?character:Character, arrowSkin:String, arrowStyle:String, ?autoplay:Bool = true, ?keyAmount:Int = 4, ?visibleArrow:Bool = true)
     {
         super();
 
@@ -200,18 +409,34 @@ class Strumline extends FlxTypedGroup<FlxBasic>
 
         this.autoplay = autoplay;
 		this.character = character;
-		this.playState = playState;
+		this.visibleArrow = visibleArrow;
+		if ((FlxG.state is PlayState))
+		{
+			PlayState.instance.callOnHaxes('onCreateArrow', [x, character, arrowSkin, arrowStyle, keyAmount, visibleArrow]);
+			PlayState.instance.callOnHaxes('createArrow', [x, character, arrowSkin, arrowStyle, keyAmount, visibleArrow]);
+			PlayState.instance.setOnHaxes('receptors', receptors);
+			PlayState.instance.setOnHaxes('notesGroup', notesGroup);
+			PlayState.instance.setOnHaxes('holdsGroup', holdsGroup);
+			PlayState.instance.setOnHaxes('allNotes', allNotes);
+		}
 
         for (i in 0...keyAmount)
         {
             var babyArrow:StaticNote = new StaticNote(-25 + x, 25 + (ClientPrefs.downScroll ? FlxG.height - 200 : 0), i, arrowSkin, arrowStyle);
+
+			if ((FlxG.state is PlayState))
+			{
+				PlayState.instance.setOnHaxes('babyArrow', babyArrow);
+			}
 			babyArrow.downScroll = ClientPrefs.downScroll;
             babyArrow.x += Note.swagWidth * i;
             babyArrow.x += 50;
+			babyArrow.debugMode = debugMode;
             babyArrow.x -= ((keyAmount / 2) * Note.swagWidth);
             babyArrow.ID = i;
             receptors.add(babyArrow);
             babyArrow.playAnim('static');
+			babyArrow.visible = visibleArrow;
         }
         add(receptors);
         add(holdsGroup);

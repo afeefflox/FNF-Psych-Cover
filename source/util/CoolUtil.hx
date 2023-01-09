@@ -7,6 +7,10 @@ import lime.utils.AssetLibrary;
 import lime.utils.AssetManifest;
 import flixel.system.FlxSound;
 import meta.state.PlayState;
+import flixel.graphics.FlxGraphic;
+import flixel.graphics.frames.FlxFramesCollection;
+import flixel.graphics.frames.FlxAtlasFrames;
+import animateatlas.AtlasFrameMaker;
 #if sys
 import sys.io.File;
 import sys.FileSystem;
@@ -138,5 +142,54 @@ class CoolUtil
 		#else
 		FlxG.openURL(site);
 		#end
+	}
+
+	public static function loadFrames(key:String, ?library:String = null, SkipAtlasCheck:Bool = false):FlxFramesCollection {
+		if (Paths.fileExists('images/$key/1.png', IMAGE, false, library)) {
+			var graphic = FlxG.bitmap.add("flixel/images/logo/default.png", false, "flixel/images/logo/default.png");
+			var frames = FlxAtlasFrames.findFrame(graphic);
+			if (frames != null)
+				return frames;
+
+			var spritesheets = [];
+			var i = 1;
+			var finalFrames = new FlxFramesCollection(graphic, ATLAS);
+
+			while (Paths.fileExists('images/$key/$i.png',IMAGE, false, library))
+			{
+				spritesheets.push(loadFrames('$key/$i', library));
+				i++;
+			}
+
+			for(frames in spritesheets)
+				if (frames != null && frames.frames != null)
+					for(f in frames.frames)
+						if (f != null) {
+							finalFrames.frames.push(f);
+							f.parent = frames.parent;
+						}
+			return finalFrames;
+		}
+		else if (!SkipAtlasCheck && Paths.fileExists('images/$key/Animation.json', TEXT, false, library)
+			&& Paths.fileExists('images/$key/spritemap.json', TEXT, false, library)
+		    && Paths.fileExists('images/$key/spritemap.png', IMAGE, false, library))
+		{
+			return AtlasFrameMaker.construct(key, library);
+		}
+		else if (Paths.fileExists('images/$key.xml', TEXT, false, library)) {
+			return Paths.getSparrowAtlas(key, library);
+		}
+		else if (Paths.fileExists('images/$key.txt', TEXT, false, library)) {
+			return Paths.getPackerAtlas(key, library);
+		}
+		//**THIS IS NOT TEXTURE ATLAS**/
+		else if (Paths.fileExists('images/$key.json', TEXT, false, library)) {
+			return Paths.getTexturePackerAtlas(key, library);
+		}
+
+		var graph:FlxGraphic = Paths.image(key, library);
+		if (graph == null)
+			return null;
+		return graph.imageFrame;
 	}
 }

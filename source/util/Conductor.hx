@@ -52,6 +52,10 @@ class Conductor
 		return lastChange.stepCrochet*4;
 	}
 
+	public inline static function secsToRow(sex:Float):Int{
+		return Math.round(getBeat(sex) * 48);
+	}
+
 	public static function getBPMFromSeconds(time:Float){
 		var lastChange:BPMChangeEvent = {
 			stepTime: 0,

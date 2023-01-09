@@ -5,6 +5,10 @@
 				-5,
 				0
 			],
+			"offsets_player": [
+				-5,
+				0
+			],
 			"loop": false,
 			"fps": 24,
 			"anim": "idle",
@@ -13,8 +17,12 @@
 		},
 		{
 			"offsets": [
+				-40,
+				-8
+			],
+			"offsets_player": [
 				5,
-				-6
+				-7
 			],
 			"loop": false,
 			"fps": 24,
@@ -24,8 +32,12 @@
 		},
 		{
 			"offsets": [
-				-20,
+				-30,
 				-51
+			],
+			"offsets_player": [
+				-20,
+				-50
 			],
 			"loop": false,
 			"fps": 24,
@@ -35,8 +47,12 @@
 		},
 		{
 			"offsets": [
-				-46,
-				27
+				4,
+				30
+			],
+			"offsets_player": [
+				-50,
+				30
 			],
 			"loop": false,
 			"fps": 24,
@@ -46,8 +62,12 @@
 		},
 		{
 			"offsets": [
-				-48,
+				32,
 				-7
+			],
+			"offsets_player": [
+				-49,
+				-4
 			],
 			"loop": false,
 			"fps": 24,
@@ -57,7 +77,11 @@
 		},
 		{
 			"offsets": [
-				7,
+				-39,
+				19
+			],
+			"offsets_player": [
+				3,
 				19
 			],
 			"loop": false,
@@ -68,8 +92,12 @@
 		},
 		{
 			"offsets": [
-				-15,
+				-25,
 				-19
+			],
+			"offsets_player": [
+				-20,
+				-21
 			],
 			"loop": false,
 			"fps": 24,
@@ -79,8 +107,12 @@
 		},
 		{
 			"offsets": [
-				-46,
+				-5,
 				27
+			],
+			"offsets_player": [
+				-43,
+				24
 			],
 			"loop": false,
 			"fps": 24,
@@ -90,8 +122,12 @@
 		},
 		{
 			"offsets": [
-				-44,
-				22
+				36,
+				19
+			],
+			"offsets_player": [
+				-42,
+				20
 			],
 			"loop": false,
 			"fps": 24,
@@ -101,6 +137,10 @@
 		},
 		{
 			"offsets": [
+				-3,
+				6
+			],
+			"offsets_player": [
 				-3,
 				5
 			],
@@ -112,8 +152,12 @@
 		},
 		{
 			"offsets": [
+				16,
+				19
+			],
+			"offsets_player": [
 				14,
-				18
+				19
 			],
 			"loop": false,
 			"fps": 24,
@@ -123,8 +167,12 @@
 		},
 		{
 			"offsets": [
-				-4,
+				-5,
 				0
+			],
+			"offsets_player": [
+				-6,
+				1
 			],
 			"loop": true,
 			"fps": 24,
@@ -134,8 +182,12 @@
 		},
 		{
 			"offsets": [
-				-10,
-				-16
+				-33,
+				-19
+			],
+			"offsets_player": [
+				-3,
+				-15
 			],
 			"loop": false,
 			"fps": 24,
@@ -145,8 +197,12 @@
 		},
 		{
 			"offsets": [
-				294,
-				267
+				-6,
+				263
+			],
+			"offsets_player": [
+				300,
+				270
 			],
 			"loop": false,
 			"fps": 24,
@@ -156,7 +212,11 @@
 		},
 		{
 			"offsets": [
-				-40,
+				-10,
+				-40
+			],
+			"offsets_player": [
+				-30,
 				-40
 			],
 			"loop": false,
@@ -164,14 +224,53 @@
 			"anim": "pre-attack",
 			"indices": [],
 			"name": "bf pre attack"
+		},
+		{
+			"loop": true,
+			"offsets_player": [
+				14,
+				18
+			],
+			"offsets": [
+				16,
+				19
+			],
+			"anim": "hurt-loop",
+			"fps": 24,
+			"name": "BF hit",
+			"indices": [
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18
+			]
 		}
 	],
 	"no_antialiasing": false,
+	"playerCamera_position": [
+		0,
+		0
+	],
+	"splashSkin": "noteSplashes",
 	"image": "characters/BOYFRIEND",
 	"position": [
 		0,
 		350
 	],
+	"player_position": [
+		0,
+		350
+	],
+	"arrowStyle": "normal",
+	"arrowSkin": "NOTE_assets",
 	"healthicon": "bf",
 	"flip_x": true,
 	"healthbar_colors": [

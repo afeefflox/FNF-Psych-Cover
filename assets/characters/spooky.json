@@ -6,6 +6,10 @@
 				59,
 				-20
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "hey",
 			"fps": 24,
 			"name": "spooky kids YEAH!!",
@@ -16,6 +20,10 @@
 			"offsets": [
 				130,
 				-10
+			],
+			"offsets_player":[
+				0,
+				0
 			],
 			"anim": "singLEFT",
 			"fps": 24,
@@ -28,6 +36,10 @@
 				-130,
 				-14
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singRIGHT",
 			"fps": 24,
 			"name": "spooky sing right",
@@ -39,6 +51,10 @@
 				-50,
 				-130
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"anim": "singDOWN",
 			"fps": 24,
 			"name": "spooky DOWN note",
@@ -47,6 +63,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -62,6 +82,10 @@
 		{
 			"loop": false,
 			"offsets": [
+				0,
+				0
+			],
+			"offsets_player":[
 				0,
 				0
 			],
@@ -81,6 +105,10 @@
 				-20,
 				26
 			],
+			"offsets_player":[
+				0,
+				0
+			],
 			"fps": 24,
 			"anim": "singUP",
 			"indices": [],
@@ -93,7 +121,14 @@
 		0,
 		200
 	],
+	"player_position": [
+		0,
+		0
+	],
 	"healthicon": "spooky",
+	"arrowSkin": "NOTE_assets",
+	"splashSkin": "noteSplashes",
+	"arrowStyle": "normal",
 	"flip_x": false,
 	"healthbar_colors": [
 		213,
@@ -101,6 +136,10 @@
 		0
 	],
 	"camera_position": [
+		0,
+		0
+	],
+	"playerCamera_position": [
 		0,
 		0
 	],
