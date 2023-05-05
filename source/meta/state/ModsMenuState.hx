@@ -31,6 +31,7 @@ import util.WeekData;
 import objects.AttachedSprite;
 import objects.Alphabet;
 import util.CoolUtil;
+import meta.state.freeplay.*;
 
 using StringTools;
 
@@ -427,6 +428,16 @@ class ModsMenuState extends MusicBeatState
 				{
 					FreeplayState.vocals.fadeOut(0.3);
 					FreeplayState.vocals = null;
+				}
+				if(BETADCIUState.vocals != null)
+				{
+					BETADCIUState.vocals.fadeOut(0.3);
+					BETADCIUState.vocals = null;
+				}
+				if(CoverState.vocals != null)
+				{
+					CoverState.vocals.fadeOut(0.3);
+					CoverState.vocals = null;
 				}
 				FlxG.camera.fade(FlxColor.BLACK, 0.5, false, FlxG.resetGame, false);
 			}

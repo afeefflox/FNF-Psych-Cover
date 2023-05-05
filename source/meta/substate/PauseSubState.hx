@@ -23,6 +23,8 @@ import util.WeekData;
 import meta.state.*;
 import MusicBeat;
 import util.Song;
+import meta.state.freeplay.*;
+
 class PauseSubState extends MusicBeatSubstate
 {
 	var grpMenuShit:FlxTypedGroup<Alphabet>;
@@ -264,11 +266,15 @@ class PauseSubState extends MusicBeatSubstate
 					PlayState.seenCutscene = false;
 
 					WeekData.loadTheFirstEnabledMod();
-					if(PlayState.isStoryMode) {
+					if (PlayState.isStoryMode)
 						MusicBeatState.switchState(new StoryMenuState());
-					} else {
+					else if (PlayState.isBETADCIU)
+						MusicBeatState.switchState(new BETADCIUState());
+					else if (PlayState.isCover)
+						MusicBeatState.switchState(new CoverState());
+					else
 						MusicBeatState.switchState(new FreeplayState());
-					}
+
 					PlayState.cancelMusicFadeTween();
 					FlxG.sound.playMusic(Paths.music('freakyMenu'));
 					PlayState.changedDifficulty = false;

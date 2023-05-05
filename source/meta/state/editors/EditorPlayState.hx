@@ -23,6 +23,7 @@ import openfl.events.KeyboardEvent;
 import meta.state.editors.EditorLua;
 import objects.NoteSplash;
 import objects.Note;
+import StrumNote;
 using StringTools;
 
 class EditorPlayState extends MusicBeatState
@@ -30,9 +31,9 @@ class EditorPlayState extends MusicBeatState
 	// Yes, this is mostly a copy of PlayState, it's kinda dumb to make a direct copy of it but... ehhh
 	private var strumLine:FlxSprite;
 	private var comboGroup:FlxTypedGroup<FlxSprite>;
-	public var strumLineNotes:FlxTypedGroup<StrumNote>;
-	public var opponentStrums:FlxTypedGroup<StrumNote>;
-	public var playerStrums:FlxTypedGroup<StrumNote>;
+	public var strumLineNotes:FlxTypedGroup<StrumFakeNote>;
+	public var opponentStrums:FlxTypedGroup<StrumFakeNote>;
+	public var playerStrums:FlxTypedGroup<StrumFakeNote>;
 	public var grpNoteSplashes:FlxTypedGroup<NoteSplash>;
 	public var notes:FlxTypedGroup<Note>;
 	public var unspawnNotes:Array<Note> = [];
@@ -88,9 +89,9 @@ class EditorPlayState extends MusicBeatState
 		comboGroup = new FlxTypedGroup<FlxSprite>();
 		add(comboGroup);
 
-		strumLineNotes = new FlxTypedGroup<StrumNote>();
-		opponentStrums = new FlxTypedGroup<StrumNote>();
-		playerStrums = new FlxTypedGroup<StrumNote>();
+		strumLineNotes = new FlxTypedGroup<StrumFakeNote>();
+		opponentStrums = new FlxTypedGroup<StrumFakeNote>();
+		playerStrums = new FlxTypedGroup<StrumFakeNote>();
 		add(strumLineNotes);
 
 		generateStaticArrows(0);
@@ -616,7 +617,7 @@ class EditorPlayState extends MusicBeatState
 				Conductor.songPosition = lastTime;
 			}
 
-			var spr:StrumNote = playerStrums.members[key];
+			var spr:StrumFakeNote = playerStrums.members[key];
 			if(spr != null && spr.animation.curAnim.name != 'confirm')
 			{
 				spr.playAnim('pressed');
@@ -641,7 +642,7 @@ class EditorPlayState extends MusicBeatState
 		var key:Int = getKeyFromEvent(eventKey);
 		if(key > -1)
 		{
-			var spr:StrumNote = playerStrums.members[key];
+			var spr:StrumFakeNote = playerStrums.members[key];
 			if(spr != null)
 			{
 				spr.playAnim('static');
@@ -756,7 +757,7 @@ class EditorPlayState extends MusicBeatState
 				songHits++;
 			}
 
-			playerStrums.forEach(function(spr:StrumNote)
+			playerStrums.forEach(function(spr:StrumFakeNote)
 			{
 				if (Math.abs(note.noteData) == spr.ID)
 				{
@@ -969,7 +970,7 @@ class EditorPlayState extends MusicBeatState
 				else if(ClientPrefs.middleScroll) targetAlpha = 0.35;
 			}
 
-			var babyArrow:StrumNote = new StrumNote(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X, strumLine.y, i, player);
+			var babyArrow:StrumFakeNote = new StrumFakeNote(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X, strumLine.y, i, player);
 			babyArrow.alpha = targetAlpha;
 
 			if (player == 1)
@@ -996,7 +997,7 @@ class EditorPlayState extends MusicBeatState
 
 	// For Opponent's notes glow
 	function StrumPlayAnim(isDad:Bool, id:Int, time:Float) {
-		var spr:StrumNote = null;
+		var spr:StrumFakeNote = null;
 		if(isDad) {
 			spr = strumLineNotes.members[id];
 		} else {
@@ -1013,7 +1014,7 @@ class EditorPlayState extends MusicBeatState
 	// Note splash shit, duh
 	function spawnNoteSplashOnNote(note:Note) {
 		if(ClientPrefs.noteSplashes && note != null) {
-			var strum:StrumNote = playerStrums.members[note.noteData];
+			var strum:StrumFakeNote = playerStrums.members[note.noteData];
 			if(strum != null) {
 				spawnNoteSplash(strum.x, strum.y, note.noteData, note);
 			}

@@ -2,8 +2,10 @@ package objects;
 
 import flixel.FlxSprite;
 import flixel.graphics.frames.FlxAtlasFrames;
+import flixel.group.FlxGroup.FlxTypedGroup;
 
-class BackgroundDancer extends FlxSprite
+
+class LimoDancer extends FlxSprite
 {
 	public function new(x:Float, y:Float)
 	{
@@ -26,5 +28,18 @@ class BackgroundDancer extends FlxSprite
 			animation.play('danceRight', true);
 		else
 			animation.play('danceLeft', true);
+	}
+}
+
+class BackgroundDancer extends FlxTypedGroup<LimoDancer>
+{
+	public function new(x:Float, y:Float) {
+		super();
+		for (i in 0...5)
+		{
+			var dancer:LimoDancer = new LimoDancer((370 * i) + 320 + x, y - 400);
+			dancer.scrollFactor.set(0.4, 0.4);
+			add(dancer);
+		}
 	}
 }

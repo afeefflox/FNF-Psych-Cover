@@ -11,6 +11,8 @@ import flixel.graphics.FlxGraphic;
 import flixel.graphics.frames.FlxFramesCollection;
 import flixel.graphics.frames.FlxAtlasFrames;
 import animateatlas.AtlasFrameMaker;
+import objects.Character;
+import flixel.util.FlxSave;
 #if sys
 import sys.io.File;
 import sys.FileSystem;
@@ -145,6 +147,7 @@ class CoolUtil
 	}
 
 	public static function loadFrames(key:String, ?library:String = null, SkipAtlasCheck:Bool = false):FlxFramesCollection {
+		/*
 		if (Paths.fileExists('images/$key/1.png', IMAGE, false, library)) {
 			var graphic = FlxG.bitmap.add("flixel/images/logo/default.png", false, "flixel/images/logo/default.png");
 			var frames = FlxAtlasFrames.findFrame(graphic);
@@ -170,20 +173,21 @@ class CoolUtil
 						}
 			return finalFrames;
 		}
-		else if (!SkipAtlasCheck && Paths.fileExists('images/$key/Animation.json', TEXT, false, library)
+		*/
+		if (!SkipAtlasCheck && Paths.fileExists('images/$key/Animation.json', TEXT, false, library)
 			&& Paths.fileExists('images/$key/spritemap.json', TEXT, false, library)
 		    && Paths.fileExists('images/$key/spritemap.png', IMAGE, false, library))
 		{
 			return AtlasFrameMaker.construct(key, library);
 		}
-		else if (Paths.fileExists('images/$key.xml', TEXT, false, library)) {
+		else if (Paths.fileExists('images/$key.xml', TEXT, false, library) && Paths.fileExists('images/$key.png', IMAGE, false, library)) {
 			return Paths.getSparrowAtlas(key, library);
 		}
-		else if (Paths.fileExists('images/$key.txt', TEXT, false, library)) {
+		else if (Paths.fileExists('images/$key.txt', TEXT, false, library) && Paths.fileExists('images/$key.png', IMAGE, false, library)) {
 			return Paths.getPackerAtlas(key, library);
 		}
 		//**THIS IS NOT TEXTURE ATLAS**/
-		else if (Paths.fileExists('images/$key.json', TEXT, false, library)) {
+		else if (Paths.fileExists('images/$key.json', TEXT, false, library) && Paths.fileExists('images/$key.png', IMAGE, false, library)) {
 			return Paths.getTexturePackerAtlas(key, library);
 		}
 
@@ -191,5 +195,39 @@ class CoolUtil
 		if (graph == null)
 			return null;
 		return graph.imageFrame;
+	}
+
+	inline public static function absoluteDirectory(file:String):Array<String>
+	{
+		if (!file.endsWith('/'))
+			file = '$file/';
+
+
+		var absolutePath:String = FileSystem.absolutePath(file);
+		var directory:Array<String> = FileSystem.readDirectory(absolutePath);
+
+		if (directory != null)
+		{
+			var dirCopy:Array<String> = directory.copy();
+
+			for (i in dirCopy)
+			{
+				var index:Int = dirCopy.indexOf(i);
+				var file:String = '$absolutePath$i';
+				dirCopy.remove(i);
+				dirCopy.insert(index, file);
+			}
+
+			directory = dirCopy;
+		}
+
+		return if (directory != null) directory else [];
+	}
+
+	public static function getSavePath(folder:String = 'ShadowMario'):String {
+		@:privateAccess
+		return #if (flixel < "5.0.0") folder #else FlxG.stage.application.meta.get('company')
+			+ '/'
+			+ FlxSave.validate(FlxG.stage.application.meta.get('file')) #end;
 	}
 }

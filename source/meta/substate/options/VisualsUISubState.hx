@@ -69,6 +69,8 @@ class VisualsUISubState extends BaseOptionsMenu
 			true);
 		addOption(option);
 
+
+
 		var option:Option = new Option('Score Text Zoom on Hit',
 			"If unchecked, disables the Score text zooming\neverytime you hit a note.",
 			'scoreZoom',

@@ -35,12 +35,14 @@ class ClientPrefs {
 	public static var controllerMode:Bool = false;
 	public static var hitsoundVolume:Float = 0;
 	public static var pauseMusic:String = 'Tea Time';
+	public static var inputType:String = 'Psych';
 	public static var checkForUpdates:Bool = true;
-	public static var ghostCharacter:Bool = true;
+	public static var betadciu:Bool = false;
 	public static var comboStacking = true;
 	public static var gameplaySettings:Map<String, Dynamic> = [
 		'scrollspeed' => 1.0,
 		'scrolltype' => 'multiplicative', 
+		'showcase' => false, 
 		// anyone reading this, amod is multiplicative speed mod, cmod is constant speed mod, and xmod is bpm based speed mod.
 		// an amod example would be chartSpeed * multiplier
 		// cmod would just be constantSpeed = chartSpeed
@@ -89,7 +91,8 @@ class ClientPrefs {
 		'volume_down'	=> [NUMPADMINUS, MINUS],
 		
 		'debug_1'		=> [SEVEN, NONE],
-		'debug_2'		=> [EIGHT, NONE]
+		'debug_2'		=> [EIGHT, NONE],
+		'botplay'       => [SIX, NONE],
 	];
 	public static var defaultKeys:Map<String, Array<FlxKey>> = null;
 
@@ -135,7 +138,7 @@ class ClientPrefs {
 		FlxG.save.data.pauseMusic = pauseMusic;
 		FlxG.save.data.checkForUpdates = checkForUpdates;
 		FlxG.save.data.comboStacking = comboStacking;
-		FlxG.save.data.ghostCharacter = ghostCharacter;
+		FlxG.save.data.betadciu = betadciu;
 	
 		FlxG.save.flush();
 
@@ -190,8 +193,8 @@ class ClientPrefs {
 		if(FlxG.save.data.camZooms != null) {
 			camZooms = FlxG.save.data.camZooms;
 		}
-		if(FlxG.save.data.ghostCharacter != null) {
-			ghostCharacter = FlxG.save.data.ghostCharacter;
+		if(FlxG.save.data.betadciu != null) {
+			betadciu = FlxG.save.data.betadciu;
 		}
 		if(FlxG.save.data.hideHud != null) {
 			hideHud = FlxG.save.data.hideHud;

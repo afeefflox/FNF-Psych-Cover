@@ -1,7 +1,7 @@
 package meta.substate;
 
 import meta.state.StoryMenuState;
-import meta.state.FreeplayState;
+import meta.state.freeplay.*;
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSubState;
@@ -50,7 +50,7 @@ class GameOverSubstate extends MusicBeatSubstate
 		super.create();
 	}
 
-	public function new(x:Float, y:Float, camX:Float, camY:Float)
+	public function new(x:Float, y:Float, ?isPlayer:Bool = true, camX:Float, camY:Float)
 	{
 		super();
 
@@ -59,8 +59,17 @@ class GameOverSubstate extends MusicBeatSubstate
 		Conductor.songPosition = 0;
 
 		boyfriend = new Character(x, y, characterName, true);
-		boyfriend.x += boyfriend.positionArray[0];
-		boyfriend.y += boyfriend.positionArray[1];
+		if(isPlayer)
+		{
+			boyfriend.x += boyfriend.playerPositionArray[0];
+			boyfriend.y += boyfriend.playerPositionArray[1];
+		}
+		else
+		{
+			boyfriend.x += boyfriend.positionArray[0];
+			boyfriend.y += boyfriend.positionArray[1];
+		}
+
 		add(boyfriend);
 
 		camFollow = new FlxPoint(boyfriend.getGraphicMidpoint().x, boyfriend.getGraphicMidpoint().y);
@@ -105,6 +114,10 @@ class GameOverSubstate extends MusicBeatSubstate
 			WeekData.loadTheFirstEnabledMod();
 			if (PlayState.isStoryMode)
 				MusicBeatState.switchState(new StoryMenuState());
+			else if (PlayState.isBETADCIU)
+				MusicBeatState.switchState(new BETADCIUState());
+			else if (PlayState.isCover)
+				MusicBeatState.switchState(new CoverState());
 			else
 				MusicBeatState.switchState(new FreeplayState());
 

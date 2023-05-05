@@ -23,6 +23,7 @@ import util.Achievements;
 import meta.state.editors.MasterEditorMenu;
 import flixel.input.keyboard.FlxKey;
 import meta.state.*;
+import meta.state.freeplay.*;
 import util.CoolUtil;
 using StringTools;
 
@@ -179,6 +180,8 @@ class MainMenuState extends MusicBeatState
 		{
 			FlxG.sound.music.volume += 0.5 * FlxG.elapsed;
 			if(FreeplayState.vocals != null) FreeplayState.vocals.volume += 0.5 * elapsed;
+			if(CoverState.vocals != null) CoverState.vocals.volume += 0.5 * elapsed;
+			if(BETADCIUState.vocals != null) BETADCIUState.vocals.volume += 0.5 * elapsed;
 		}
 
 		var lerpVal:Float = CoolUtil.boundTo(elapsed * 7.5, 0, 1);
@@ -241,7 +244,11 @@ class MainMenuState extends MusicBeatState
 									case 'story_mode':
 										MusicBeatState.switchState(new StoryMenuState());
 									case 'freeplay':
-										MusicBeatState.switchState(new FreeplayState());
+										if(ClientPrefs.betadciu)
+											MusicBeatState.switchState(new FreeplayMenu());
+										else
+											MusicBeatState.switchState(new FreeplayState());
+										
 									#if MODS_ALLOWED
 									case 'mods':
 										MusicBeatState.switchState(new ModsMenuState());

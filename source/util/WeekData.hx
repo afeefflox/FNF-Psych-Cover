@@ -137,7 +137,8 @@ class WeekData {
 		for (i in 0...sexList.length) {
 			for (j in 0...directories.length) {
 				var fileToCheck:String = directories[j] + 'weeks/' + sexList[i] + '.json';
-				if(!weeksLoaded.exists(sexList[i])) {
+				//Prevent adding Cover and Betadciu
+				if(!weeksLoaded.exists(sexList[i]) && !fileToCheck.endsWith('-cover.json') && !fileToCheck.endsWith('-betadciu.json')) {
 					var week:WeekFile = getWeekFile(fileToCheck);
 					if(week != null) {
 						var weekFile:WeekData = new WeekData(week, sexList[i]);
@@ -165,7 +166,7 @@ class WeekData {
 				for (daWeek in listOfWeeks)
 				{
 					var path:String = directory + daWeek + '.json';
-					if(sys.FileSystem.exists(path))
+					if(sys.FileSystem.exists(path) && !path.endsWith('-cover.json') && !path.endsWith('-betadciu.json'))
 					{
 						addWeek(daWeek, path, directories[i], i, originalLength);
 					}
@@ -174,7 +175,8 @@ class WeekData {
 				for (file in FileSystem.readDirectory(directory))
 				{
 					var path = haxe.io.Path.join([directory, file]);
-					if (!sys.FileSystem.isDirectory(path) && file.endsWith('.json'))
+					//Prevent Cover and Betadciu
+					if (!sys.FileSystem.isDirectory(path) && file.endsWith('.json') && !file.endsWith('-cover.json') && !file.endsWith('-betadciu.json'))
 					{
 						addWeek(file.substr(0, file.length - 5), path, directories[i], i, originalLength);
 					}

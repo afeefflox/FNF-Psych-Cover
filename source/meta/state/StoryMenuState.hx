@@ -26,6 +26,7 @@ import util.CoolUtil;
 import meta.substate.GameplayChangersSubstate;
 import meta.substate.ResetScoreSubState;
 import meta.state.MainMenuState;
+import meta.state.freeplay.*;
 import util.Song;
 import util.Highscore;
 
@@ -335,6 +336,8 @@ class StoryMenuState extends MusicBeatState
 			{
 				LoadingState.loadAndSwitchState(new PlayState(), true);
 				FreeplayState.destroyFreeplayVocals();
+				BETADCIUState.destroyFreeplayVocals();
+				CoverState.destroyFreeplayVocals();
 			});
 		} else {
 			FlxG.sound.play(Paths.sound('cancelMenu'));

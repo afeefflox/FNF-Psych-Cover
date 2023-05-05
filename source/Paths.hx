@@ -9,6 +9,7 @@ import haxe.xml.Access;
 import openfl.system.System;
 import flixel.FlxG;
 import flixel.graphics.frames.FlxAtlasFrames;
+import flixel.graphics.frames.FlxFramesCollection;
 import openfl.utils.AssetType;
 import openfl.utils.Assets as OpenFlAssets;
 import lime.utils.Assets;
@@ -171,8 +172,15 @@ class Paths
 	{
 		return getPath('shaders/$key.vert', TEXT, library);
 	}
+	
 	inline static public function lua(key:String, ?library:String)
 	{
+		#if MODS_ALLOWED
+		var file:String = modFolders('$key.lua');
+		if(FileSystem.exists(file)) {
+			return file;
+		}
+		#end
 		return getPath('$key.lua', TEXT, library);
 	}
 
@@ -185,6 +193,31 @@ class Paths
 		}
 		#end
 		return 'assets/videos/$key.$VIDEO_EXT';
+	}
+
+	inline static public function module(key:String, folder:String = 'scripts', ?library:String)
+	{
+		var extension = '.hx';
+		var scriptExts:Array<String> = ['hx', 'hxs', 'hscript', 'hxc'];
+		for (j in scriptExts)
+		{
+			if (fileExists('$folder/$key.$j', TEXT, library))
+				extension = '.$j';
+			else
+				extension = '.hx';
+		}
+		#if MODS_ALLOWED
+		var file:String = modFolders('$folder/$key' + extension);
+		if(FileSystem.exists(file)) {
+			return file;
+		}
+		else {
+			return getPreloadPath('$folder/$key' + extension);
+		}
+		#else
+		return getPreloadPath('$folder/$key' + extension);
+		#end
+		
 	}
 
 	static public function sound(key:String, ?library:String):Sound
@@ -216,6 +249,19 @@ class Paths
 		var songKey:String = '${formatToSongPath(song)}/Inst';
 		var inst = returnSound('songs', songKey);
 		return inst;
+	}
+
+	inline static public function songJson(jsonInput:String, ?folder:String)
+	{
+		var formattedFolder:String = Paths.formatToSongPath(folder);
+		var formattedSong:String = Paths.formatToSongPath(jsonInput);
+		#if MODS_ALLOWED
+		var file:String = modsJson(formattedFolder + '/' + formattedSong);
+		if(FileSystem.exists(file)) {
+			return file;
+		}
+		#end
+		return Paths.json(formattedFolder + '/' + formattedSong);
 	}
 
 	inline static public function image(key:String, ?library:String):FlxGraphic
@@ -415,9 +461,10 @@ class Paths
 			localTrackedAssets.push(path);
 			return currentTrackedAssets.get(path);
 		}
-		trace('oh no $key it returning null NOOOO');
+		trace('oh no $key is returning null NOOOO');
 		return null;
 	}
+
 
 	public static var currentTrackedSounds:Map<String, Sound> = [];
 	public static function returnSound(path:String, key:String, ?library:String) {

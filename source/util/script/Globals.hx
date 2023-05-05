@@ -5,7 +5,9 @@ import objects.HealthIcon;
 import objects.Character;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
+import flixel.group.FlxGroup;
 import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.group.FlxSpriteGroup.FlxTypedSpriteGroup;
 import animateatlas.AtlasFrameMaker;
 import flixel.FlxCamera;
 import flixel.text.FlxText.FlxTextAlign;
@@ -29,6 +31,7 @@ import flixel.addons.display.FlxRuntimeShader;
 using StringTools;
 
 class Globals {
+
 	public static inline function getInstance()
 	{
 		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
@@ -60,6 +63,30 @@ class Globals {
 			return true;
 		}
 		return false;
+	}
+
+	inline public static function createTypedGroup(?variable:Dynamic):Dynamic
+	{
+		variable = new FlxTypedGroup<Dynamic>();
+		return variable;
+	}
+
+	inline public static function createTypedSpriteGroup(?variable:Dynamic):Dynamic
+	{
+		variable = new FlxTypedSpriteGroup<Dynamic>();
+		return variable;
+	}
+
+	inline public static function createSpriteGroup(?variable)
+	{
+		variable = new FlxSpriteGroup();
+		return variable;
+	}
+
+	inline public static function createGroup(?variable)
+	{
+		variable = new FlxGroup();
+		return variable;
 	}
 
 	//Better optimized than using some getProperty shit or idk
@@ -338,6 +365,20 @@ class Globals {
 		PlayState.instance.modchartGroups.remove(tag);
 	}
 
+	public static function resetGroupTypedTag(tag:String) {
+		if(!PlayState.instance.modchartGroupTypes.exists(tag)) {
+			return;
+		}
+
+		var pee:ModchartGroupTyped = PlayState.instance.modchartGroupTypes.get(tag);
+		pee.kill();
+		if(pee.wasAdded) {
+			PlayState.instance.remove(pee, true);
+		}
+		pee.destroy();
+		PlayState.instance.modchartGroupTypes.remove(tag);
+	}
+
 	public static function resetCharacterTag(tag:String) {
 		if(!PlayState.instance.modchartCharacters.exists(tag)) {
 			return;
@@ -523,12 +564,21 @@ class CustomSubstate extends MusicBeatSubstate
 class ModchartCharacter extends Character
 {
 	public var wasAdded:Bool = false;
-	public function new(?x:Float = 0, ?y:Float = 0, ?char:String, ?isPlayer:Bool = false)
+	public function new(x:Float, y:Float, ?character:String = 'bf', ?isPlayer:Bool = false)
 	{
-		super(x, y, char, isPlayer);
+		super(x, y, character, isPlayer);
 	}
 }
 
+class ModchartGroupTyped extends FlxTypedGroup<Dynamic>
+{
+	public var wasAdded:Bool = false;
+	public function new(maxSize:Int = 0)
+	{
+		super(maxSize);
+	}
+
+}
 class ModchartGroup extends FlxSpriteGroup
 {
 	public var wasAdded:Bool = false;

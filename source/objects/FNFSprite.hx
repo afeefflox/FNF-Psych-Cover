@@ -1,7 +1,6 @@
 package objects;
 
 import flixel.FlxG;
-import flxanimate.FlxAnimate;
 import flixel.math.FlxMatrix;
 import flixel.math.FlxRect;
 import flixel.math.FlxPoint;
@@ -14,8 +13,6 @@ import util.CoolUtil;
 class FNFSprite extends FlxSprite
 {
     public var animateAtlas:FlxAnimate;
-    @:noCompletion public var atlasPlayingAnim:String;
-    @:noCompletion public var atlasPath:String;
 
     function getPaths(key:String, ?library:String) {
 		#if MODS_ALLOWED
@@ -29,8 +26,7 @@ class FNFSprite extends FlxSprite
         if (Paths.fileExists('images/$key/Animation.json', TEXT, false, library) 
             && Paths.fileExists('images/$key/spritemap1.json', TEXT, false, library) 
             && Paths.fileExists('images/$key/spritemap1.png', IMAGE, false, library) ) {
-                //Do like this?
-                animateAtlas = new FlxAnimate(x, y, getPaths('images/$key', library));
+                animateAtlas = new FlxAnimate(x, y, key, library);
             }
         else {
             frames = CoolUtil.loadFrames(key, library);
@@ -42,39 +38,19 @@ class FNFSprite extends FlxSprite
         if (animateAtlas != null)
             animateAtlas.update(elapsed);
     }
-
-    //Flx Animate Stuff ;-;
+    
     public override function draw() {
         if (animateAtlas != null) {
-            copyAtlasValues();
             animateAtlas.draw();
         } else {
             super.draw();
         }
     }
 
-    public function copyAtlasValues() {
-        @:privateAccess {
-            animateAtlas.cameras = cameras;
-            animateAtlas.scrollFactor = scrollFactor;
-            animateAtlas.scale = scale;
-            animateAtlas.offset = offset;
-            animateAtlas.x = x;
-            animateAtlas.y = y;
-            animateAtlas.angle = angle;
-            animateAtlas.alpha = alpha;
-            animateAtlas.visible = visible;
-            animateAtlas.flipX = flipX;
-            animateAtlas.flipY = flipY;
-            animateAtlas.shader = shader;
-            animateAtlas.antialiasing = antialiasing;
-        }
-    }
-
     public override function destroy() {
         super.destroy();
         if (animateAtlas != null) {
-            animateAtlas = FlxDestroyUtil.destroy(animateAtlas);
+            animateAtlas.destroy();
         }
     }
     
@@ -84,9 +60,7 @@ class FNFSprite extends FlxSprite
         if (AnimName == null) return;
 
         if (animateAtlas != null)  {
-            @:privateAccess
-            animateAtlas.anim.play(AnimName, Force, Reversed, Frame);
-            atlasPlayingAnim = AnimName;
+            animateAtlas.animation.play(AnimName, Force, Reversed, Frame);
         }
         else
         {
@@ -97,14 +71,18 @@ class FNFSprite extends FlxSprite
     public inline function existsAnimation(AnimName:String):Bool
     {
         @:privateAccess
-        return animateAtlas != null ? (animateAtlas.anim.animsMap.exists(AnimName) || animateAtlas.anim.symbolDictionary.exists(AnimName)) : animation.getByName(AnimName) != null;
+        return animateAtlas != null ? animateAtlas.animation.getByName(AnimName) != null : animation.getByName(AnimName) != null;
     }
 
     public function getAnimName():String
     {
         var name = null;
         if (animateAtlas != null) {
-            name = atlasPlayingAnim;
+            if (animateAtlas.animation.curAnim != null)
+            {
+                name = animateAtlas.animation.curAnim.name;
+            }
+            
         } else {
             if (animation.curAnim != null)
                 name = animation.curAnim.name;
@@ -113,6 +91,6 @@ class FNFSprite extends FlxSprite
     }
 
     public inline function isAnimFinished() {
-        return animateAtlas != null ? (animateAtlas.anim.finished) : (animation.curAnim != null ? animation.curAnim.finished : true);
+        return animateAtlas != null ? (animateAtlas.animation.curAnim != null ? animateAtlas.animation.curAnim.finished : true) : (animation.curAnim != null ? animation.curAnim.finished : true);
     }
 }

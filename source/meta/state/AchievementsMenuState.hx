@@ -16,6 +16,10 @@ import lime.utils.Assets;
 import flixel.FlxSubState;
 import util.Achievements;
 import objects.Alphabet;
+import meta.substate.ResetAchievementSubState;
+import util.script.FunkinLua;
+import util.script.FunkinHaxe;
+import sys.FileSystem;
 
 using StringTools;
 
@@ -28,6 +32,9 @@ class AchievementsMenuState extends MusicBeatState
 	private var achievementArray:Array<AttachedAchievement> = [];
 	private var achievementIndex:Array<Int> = [];
 	private var descText:FlxText;
+
+	public var luaArray:Array<FunkinLua> = [];
+	public var haxeArray:Array<FunkinHaxe> = [];
 
 	override function create() {
 		#if desktop
@@ -43,6 +50,44 @@ class AchievementsMenuState extends MusicBeatState
 
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
+
+		// "GLOBAL" SCRIPTS
+		var filesPushed:Array<String> = [];
+		var foldersToCheck:Array<String> = [Paths.getPreloadPath('achievements/')];
+
+		#if MODS_ALLOWED
+		foldersToCheck.insert(0, Paths.mods('achievements/'));
+		if(Paths.currentModDirectory != null && Paths.currentModDirectory.length > 0)
+			foldersToCheck.insert(0, Paths.mods(Paths.currentModDirectory + '/achievements/'));
+
+		for(mod in Paths.getGlobalMods())
+			foldersToCheck.insert(0, Paths.mods(mod + '/achievements/'));
+		#end
+
+		for (folder in foldersToCheck)
+		{
+			if(FileSystem.exists(folder))
+			{
+				for (file in FileSystem.readDirectory(folder))
+				{
+					if(!filesPushed.contains(file))
+					{
+						if(file.endsWith('.lua'))
+						{
+							#if LUA_ALLOWED
+							luaArray.push(new FunkinLua(folder + file));
+							filesPushed.push(file);
+							#end
+						}
+						else if(file.endsWith('.hx'))
+						{
+							haxeArray.push(new FunkinHaxe(folder + file));
+							filesPushed.push(file);
+						}
+					}
+				}
+			}
+		}
 
 		Achievements.loadAchievements();
 		for (i in 0...Achievements.achievementsStuff.length) {
@@ -90,6 +135,12 @@ class AchievementsMenuState extends MusicBeatState
 			FlxG.sound.play(Paths.sound('cancelMenu'));
 			MusicBeatState.switchState(new MainMenuState());
 		}
+
+		if(controls.RESET)
+		{
+			openSubState(new ResetAchievementSubState());
+			FlxG.sound.play(Paths.sound('scrollMenu'));
+		}
 	}
 
 	function changeSelection(change:Int = 0) {
@@ -117,8 +168,24 @@ class AchievementsMenuState extends MusicBeatState
 				achievementArray[i].alpha = 1;
 			}
 		}
+
 		descText.text = Achievements.achievementsStuff[achievementIndex[curSelected]][1];
 		FlxG.sound.play(Paths.sound('scrollMenu'), 0.4);
+	}
+
+	override function destroy() {
+		for (lua in luaArray) {
+			lua.call('onDestroy', []);
+			lua.stop();
+		}
+		luaArray = [];
+
+		for (lua in haxeArray) {
+			lua.call('onDestroy', []);
+			lua.call('destroy', []);
+			if(lua != null) lua = null;
+		}
+		haxeArray = [];
 	}
 	#end
 }

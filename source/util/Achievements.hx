@@ -9,6 +9,8 @@ import flixel.group.FlxSpriteGroup;
 import flixel.util.FlxColor;
 import flixel.text.FlxText;
 
+import util.script.*;
+
 using StringTools;
 
 class Achievements {
@@ -31,7 +33,6 @@ class Achievements {
 		["Debugger",					"Beat the \"Test\" Stage from the Chart Editor.",	'debugger',				 true]
 	];
 	public static var achievementsMap:Map<String, Bool> = new Map<String, Bool>();
-
 	public static var henchmenDeath:Int = 0;
 	public static function unlockAchievement(name:String):Void {
 		FlxG.log.add('Completed achievement "' + name +'"');

@@ -168,46 +168,6 @@ class Note extends FlxSprite
 				case 'GF Sing':
 					gfNote = true;
 			}
-			if ((FlxG.state is PlayState))
-			{
-				PlayState.instance.callOnHaxes('onNoteType', [value]);
-				PlayState.instance.callOnHaxes('noteType', [value]);
-				PlayState.instance.callOnHaxes('set_noteType', [value]);
-
-				PlayState.instance.setOnHaxes('note', this);
-				
-
-				PlayState.instance.setOnHaxes('texture', texture);
-				PlayState.instance.setOnHaxes('style', style);
-
-				PlayState.instance.setOnHaxes('canBeHit', canBeHit);
-				PlayState.instance.setOnHaxes('tooLate', tooLate);
-				PlayState.instance.setOnHaxes('wasGoodHit', wasGoodHit);
-				PlayState.instance.setOnHaxes('ignoreNote', ignoreNote);
-				PlayState.instance.setOnHaxes('hitByOpponent', hitByOpponent);
-				PlayState.instance.setOnHaxes('earlyHitMult', earlyHitMult);
-				PlayState.instance.setOnHaxes('gfNote', gfNote);
-				PlayState.instance.setOnHaxes('animSuffix', animSuffix);
-				PlayState.instance.setOnHaxes('noAnimation', noAnimation);
-				PlayState.instance.setOnHaxes('noMissAnimation', noMissAnimation);
-				PlayState.instance.setOnHaxes('hitCausesMiss', hitCausesMiss);
-				PlayState.instance.setOnHaxes('hitHealth', hitHealth);
-				PlayState.instance.setOnHaxes('missHealth', missHealth);
-				PlayState.instance.setOnHaxes('colorNote', colorNote);
-				
-
-				PlayState.instance.setOnHaxes('offsetX', offsetX);
-				PlayState.instance.setOnHaxes('offsetY', offsetY);
-				PlayState.instance.setOnHaxes('copyAngle', copyAngle);
-				PlayState.instance.setOnHaxes('copyAlpha', copyAlpha);
-				PlayState.instance.setOnHaxes('multAlpha', multAlpha);
-				PlayState.instance.setOnHaxes('multSpeed', multSpeed);
-				PlayState.instance.setOnHaxes('noteSplashDisabled', noteSplashDisabled);
-				PlayState.instance.setOnHaxes('noteSplashTexture', noteSplashTexture);
-				PlayState.instance.setOnHaxes('noteSplashHue', noteSplashHue);
-				PlayState.instance.setOnHaxes('noteSplashSat', noteSplashSat);
-				PlayState.instance.setOnHaxes('noteSplashBrt', noteSplashBrt);
-			}
 			noteType = value;
 		}
 		noteSplashHue = colorNote.hue;
@@ -398,28 +358,14 @@ class Note extends FlxSprite
 	{
 		super.update(elapsed);
 
-		if (mustPress)
-		{
-			// ok river
-			if (strumTime > Conductor.songPosition - (Conductor.safeZoneOffset * lateHitMult)
-				&& strumTime < Conductor.songPosition + (Conductor.safeZoneOffset * earlyHitMult))
-				canBeHit = true;
-			else
-				canBeHit = false;
-
-			if (strumTime < Conductor.songPosition - Conductor.safeZoneOffset && !wasGoodHit)
-				tooLate = true;
-		}
+		if (strumTime > Conductor.songPosition - (Conductor.safeZoneOffset * lateHitMult)
+			&& strumTime < Conductor.songPosition + (Conductor.safeZoneOffset * earlyHitMult))
+			canBeHit = true;
 		else
-		{
 			canBeHit = false;
 
-			if (strumTime < Conductor.songPosition + (Conductor.safeZoneOffset * earlyHitMult))
-			{
-				if((isSustainNote && prevNote.wasGoodHit) || strumTime <= Conductor.songPosition)
-					wasGoodHit = true;
-			}
-		}
+		if (strumTime < Conductor.songPosition - Conductor.safeZoneOffset && !wasGoodHit)
+			tooLate = true;
 
 		if (tooLate && !inEditor)
 		{

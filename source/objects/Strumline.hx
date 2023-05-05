@@ -212,16 +212,6 @@ class StaticNote extends FlxSprite {
 
     public function reloadNote()
 	{
-
-		if ((FlxG.state is PlayState))
-		{
-			PlayState.instance.callOnHaxes('reloadNote', []);
-			PlayState.instance.callOnHaxes('onReloadNote', []);
-			PlayState.instance.setOnHaxes('StaticArrow', this);
-			PlayState.instance.setOnHaxes('noteData', noteData);
-			PlayState.instance.setOnHaxes('style', style);
-			PlayState.instance.setOnHaxes('texture', texture);
-		}
 		var lastAnim:String = null;
 		if(animation.curAnim != null) lastAnim = animation.curAnim.name;
 
@@ -395,10 +385,12 @@ class Strumline extends FlxTypedGroup<FlxBasic>
 
     public var autoplay:Bool = true;
 	public var debugMode:Bool = false;
-	public var visibleArrow:Bool = true;
 	public var character:Character;
+	public var keyAmount:Int = 0;
+	public var alpha:Float = 1;
+	var babyArrow:StaticNote = null;
 
-    public function new(x:Float = 0, ?character:Character, arrowSkin:String, arrowStyle:String, ?autoplay:Bool = true, ?keyAmount:Int = 4, ?visibleArrow:Bool = true)
+    public function new(x:Float = 0, y:Float = 0, ?player:Int = 0, ?character:Character, arrowSkin:String, arrowStyle:String, ?autoplay:Bool = true, ?keyAmount:Int = 4, ?visibleArrow:Bool = false, ?alpha:Float = 1)
     {
         super();
 
@@ -409,35 +401,24 @@ class Strumline extends FlxTypedGroup<FlxBasic>
 
         this.autoplay = autoplay;
 		this.character = character;
-		this.visibleArrow = visibleArrow;
-		if ((FlxG.state is PlayState))
-		{
-			PlayState.instance.callOnHaxes('onCreateArrow', [x, character, arrowSkin, arrowStyle, keyAmount, visibleArrow]);
-			PlayState.instance.callOnHaxes('createArrow', [x, character, arrowSkin, arrowStyle, keyAmount, visibleArrow]);
-			PlayState.instance.setOnHaxes('receptors', receptors);
-			PlayState.instance.setOnHaxes('notesGroup', notesGroup);
-			PlayState.instance.setOnHaxes('holdsGroup', holdsGroup);
-			PlayState.instance.setOnHaxes('allNotes', allNotes);
-		}
-
+		this.keyAmount = keyAmount;
+		this.alpha = alpha;
         for (i in 0...keyAmount)
         {
-            var babyArrow:StaticNote = new StaticNote(-25 + x, 25 + (ClientPrefs.downScroll ? FlxG.height - 200 : 0), i, arrowSkin, arrowStyle);
-
-			if ((FlxG.state is PlayState))
-			{
-				PlayState.instance.setOnHaxes('babyArrow', babyArrow);
-			}
+            babyArrow = new StaticNote(x, y, i, arrowSkin, arrowStyle);
 			babyArrow.downScroll = ClientPrefs.downScroll;
-            babyArrow.x += Note.swagWidth * i;
-            babyArrow.x += 50;
 			babyArrow.debugMode = debugMode;
-            babyArrow.x -= ((keyAmount / 2) * Note.swagWidth);
-            babyArrow.ID = i;
             receptors.add(babyArrow);
             babyArrow.playAnim('static');
+			babyArrow.x += Note.swagWidth * i;
+			babyArrow.x += 50;
+			babyArrow.x += ((FlxG.width / 2) * player);
 			babyArrow.visible = visibleArrow;
+			babyArrow.alpha = alpha;
+			ID = i;
         }
+
+
         add(receptors);
         add(holdsGroup);
 		add(notesGroup);

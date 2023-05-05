@@ -66,7 +66,9 @@ class HealthIcon extends FlxSprite
 			for (lua in haxeArray) {
 				lua.call('onDestroy', []);
 				lua.call('destroy', []);
-				lua.stop();
+				#if hscript
+				if(lua != null) lua = null;
+				#end
 			}
 			haxeArray = [];
 
@@ -152,7 +154,7 @@ class HealthIcon extends FlxSprite
 
 		if(doPush)
 		{
-			var haxeScript:FunkinHaxe = new FunkinHaxe(hxFile, true);
+			var haxeScript:FunkinHaxe = new FunkinHaxe(hxFile);
 			haxeArray.push(haxeScript);
 		}
 		#end
@@ -206,26 +208,13 @@ class HealthIcon extends FlxSprite
 		return char;
 	}
 
-	public function call(event:String, args:Array<Dynamic>, ignoreStops:Bool = false, ?exclusions:Array<String>, ?ignoreSpecialShit:Bool = true):Dynamic
+	public function call(event:String, args:Array<Dynamic>)
 	{
-		var returnVal:Dynamic = FunkinHaxe.Function_Continue;
-		if(exclusions == null) exclusions = [];
-		for (script in haxeArray) {
-			if(exclusions.contains(script.scriptName))
-				continue;
-
-			var ret:Dynamic = script.call(event, args);
-			if(ret == FunkinHaxe.Function_StopHaxe && !ignoreStops)
-				break;
-			
-			// had to do this because there is a bug in haxe where Stop != Continue doesnt work
-			var bool:Bool = ret == FunkinHaxe.Function_Continue;
-			if(!bool && ret != 0) {
-				returnVal = cast ret;
-			}
+		if (haxeArray != null)
+		{
+			for (i in haxeArray)
+				i.call(event, args);
 		}
-		//trace(event, returnVal);
-		return FunkinHaxe.Function_Continue;
 	}
 
 	public function set(variable:String, arg:Dynamic)

@@ -74,7 +74,7 @@ class WeekDataAlt {
 		weeksList = [];
 		weeksLoaded.clear();
 		var suf:String = "";
-		switch(menuNo)
+		switch(type)
 		{
 			case 1: suf = '-betadciu';
 			case 2: suf = '-cover';

@@ -56,6 +56,13 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
+		var option:Option = new Option('BETADCIU and Cover',
+			"If checked, you can play betadciu and cover of playable.",
+			'betadciu',
+			'bool',
+			true);
+		addOption(option);
+
 		var option:Option = new Option('Opponent Notes',
 			'If unchecked, opponent notes get hidden.',
 			'opponentStrums',

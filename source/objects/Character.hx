@@ -89,9 +89,6 @@ class Character extends FNFSprite
 
 	public var hasMissAnimations:Bool = false;
 
-	//Based on Imposter lol
-	public var mostRecentRow:Int = 0;
-
 	//Used on Character Editor
 	public var imageFile:String = '';
 	public var jsonScale:Float = 1;
@@ -157,7 +154,7 @@ class Character extends FNFSprite
 				#end
 
 				var json:CharacterFile = cast Json.parse(rawJson);
-				frames = CoolUtil.loadFrames(json.image);
+				loadFrames(json.image);
 				imageFile = json.image;
 
 				if(json.scale != 1) {
@@ -221,9 +218,9 @@ class Character extends FNFSprite
 						var animIndices:Array<Int> = anim.indices;
 						if (animateAtlas != null) {
 							if(animIndices != null && animIndices.length > 0) {
-								animateAtlas.anim.addBySymbolIndices(animAnim, animName, animIndices, animFps, animLoop);
+								animateAtlas.animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
 							} else {
-								animateAtlas.anim.addBySymbol(animAnim, animName, animFps, animLoop);
+								animateAtlas.animation.addByPrefix(animAnim, animName, animFps, animLoop);
 							}
 						}
 						else
@@ -298,7 +295,14 @@ class Character extends FNFSprite
 				var firstAnim = animation.getByName(pair[0]).frames;
 				var secondAnim = animation.getByName(pair[1]).frames;
 				animation.getByName(pair[0]).frames = secondAnim;
-				animation.getByName(pair[1]).frames = firstAnim;	
+				animation.getByName(pair[1]).frames = firstAnim;
+				if(animateAtlas != null)	
+				{
+					var firstAtlasAnim = animateAtlas.animation.getByName(pair[0]).frames;
+					var secondAtlasAnim = animateAtlas.animation.getByName(pair[1]).frames;
+					animateAtlas.animation.getByName(pair[0]).frames = secondAtlasAnim;
+					animateAtlas.animation.getByName(pair[1]).frames = firstAtlasAnim;
+				}
 			}
 		}
 
@@ -348,21 +352,17 @@ class Character extends FNFSprite
 			else
 				holdTimer = 0;
 
-			if(isPlayer)
+			if (getAnimName().endsWith('miss') && isAnimFinished())
 			{
-				if (getAnimName().endsWith('miss') && isAnimFinished() && !debugMode)
-				{
-					if(danceIdle)
-						playAnim('idle', true, false, 10);
-					else
-						playAnim('danceLeft', true, false, 10);
-					
-				}
+				if(danceIdle)
+					playAnim('danceLeft', true, false, 15);
+				else
+					playAnim('idle', true, false, 10);			
+			}
 		
-				if (getAnimName() == 'firstDeath' && isAnimFinished() && startedDeath)
-				{
-					playAnim('deathLoop');
-				}
+			if (getAnimName() == 'firstDeath' && isAnimFinished() && startedDeath)
+			{
+				playAnim('deathLoop');
 			}
 
 			if(isAnimFinished() && existsAnimation(getAnimName() + '-loop'))
@@ -396,6 +396,7 @@ class Character extends FNFSprite
 			}
 		}
 	}
+	
 
 	public function getOffsets(AnimName:String):Dynamic
 	{

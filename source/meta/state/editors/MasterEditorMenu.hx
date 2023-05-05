@@ -13,6 +13,7 @@ import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.system.FlxSound;
+import meta.state.freeplay.*;
 import objects.Alphabet;
 #if MODS_ALLOWED
 import sys.FileSystem;
@@ -28,6 +29,7 @@ class MasterEditorMenu extends MusicBeatState
 		'Dialogue Editor',
 		'Dialogue Portrait Editor',
 		'Character Editor',
+		'Stage Date Editor',
 		'Chart Editor'
 	];
 	private var grpTexts:FlxTypedGroup<Alphabet>;
@@ -128,10 +130,14 @@ class MasterEditorMenu extends MusicBeatState
 					LoadingState.loadAndSwitchState(new DialogueEditorState(), false);
 				case 'Chart Editor'://felt it would be cool maybe
 					LoadingState.loadAndSwitchState(new ChartingState(), false);
+				case 'Stage Date Editor':
+					LoadingState.loadAndSwitchState(new StageDataEditorState('stage', false));
 			}
 			FlxG.sound.music.volume = 0;
 			#if PRELOAD_ALL
 			FreeplayState.destroyFreeplayVocals();
+			BETADCIUState.destroyFreeplayVocals();
+			CoverState.destroyFreeplayVocals();
 			#end
 		}
 		
