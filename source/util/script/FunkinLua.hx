@@ -2040,6 +2040,9 @@ class FunkinLua {
 					PlayState.instance.getLuaGroup(group).add(PlayState.instance.getLuaObject(obj));
 					PlayState.instance.getLuaObject(obj).wasAdded = true;
 				}
+				else {
+
+				}
 				var object = Reflect.getProperty(getInstance(), obj);
 				if(object !=null) {
 					PlayState.instance.getLuaGroup(group).add(object);
@@ -2051,13 +2054,17 @@ class FunkinLua {
 
 		Lua_helper.add_callback(lua, "insertGroup", function(group:String, obj:String, position:Int) {
 			if(PlayState.instance.getLuaGroup(group) !=null) {
-				if(PlayState.instance.getLuaObject(obj) !=null && !PlayState.instance.getLuaObject(obj).wasAdded) {
-					PlayState.instance.getLuaGroup(group).insert(position, PlayState.instance.getLuaObject(obj));
-					PlayState.instance.getLuaObject(obj).wasAdded = true;
+				var killMe:Array<String> = obj.split('.');
+				var leObj:FlxBasic = getObjectDirectly(killMe[0]);
+				if(killMe.length > 1) {
+					leObj = getVarInArray(getPropertyLoopThingWhatever(killMe), killMe[killMe.length-1]);
 				}
-				var object = Reflect.getProperty(getInstance(), obj);
-				if(object !=null) {
-					PlayState.instance.getLuaGroup(group).insert(position, object);
+				
+				if(leObj !=null) {
+					getInstance().remove(leObj, true);
+
+					getInstance().remove(leObj, true);
+					PlayState.instance.getLuaGroup(group).insert(position, leObj);
 				}
 				return true;
 			}

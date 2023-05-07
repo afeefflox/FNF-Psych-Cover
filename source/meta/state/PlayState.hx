@@ -4691,7 +4691,14 @@ class PlayState extends MusicBeatState
 			pixelShitPart2 = '-pixel';
 		}
 
-		rating.loadGraphic(Paths.image(pixelShitPart1 + daRating.image + pixelShitPart2));
+		switch(ratingFC)
+		{
+			default:
+				rating.loadGraphic(Paths.image('judegetment/' + pixelShitPart1 + daRating.image + pixelShitPart2));
+			case 'SFC':
+				rating.loadGraphic(Paths.image('judegetment/' + pixelShitPart1 + 'sick-fc' + pixelShitPart2));
+		}
+
 		rating.cameras = [camHUD];
 		rating.screenCenter();
 		rating.x = coolText.x - 40;
@@ -4703,7 +4710,8 @@ class PlayState extends MusicBeatState
 		rating.x += ClientPrefs.comboOffset[0];
 		rating.y -= ClientPrefs.comboOffset[1];
 
-		var comboSpr:FlxSprite = new FlxSprite().loadGraphic(Paths.image(pixelShitPart1 + 'combo' + pixelShitPart2));
+		var comboSpr:FlxSprite = new FlxSprite();
+		comboSpr.loadGraphic(Paths.image('combo/' + pixelShitPart1 + 'combo' + pixelShitPart2));
 		comboSpr.cameras = [camHUD];
 		comboSpr.screenCenter();
 		comboSpr.x = coolText.x;
@@ -4769,7 +4777,14 @@ class PlayState extends MusicBeatState
 		}
 		for (i in seperatedScore)
 		{
-			var numScore:FlxSprite = new FlxSprite().loadGraphic(Paths.image(pixelShitPart1 + 'num' + Std.int(i) + pixelShitPart2));
+			var numScore:FlxSprite = new FlxSprite();
+			switch(ratingFC)
+			{
+				default:
+					numScore.loadGraphic(Paths.image('combo/' + pixelShitPart1 + 'num' + Std.int(i) + pixelShitPart2));
+				case 'SFC':
+					numScore.loadGraphic(Paths.image('combo/FC/' + pixelShitPart1 + 'num' + Std.int(i) + pixelShitPart2));
+			}
 			numScore.cameras = [camHUD];
 			numScore.screenCenter();
 			numScore.x = coolText.x + (43 * daLoop) - 90;

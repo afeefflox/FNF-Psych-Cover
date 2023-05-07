@@ -261,10 +261,10 @@ class Character extends FNFSprite
 		if (isPlayer)
 		{
 			flipX = !flipX;
-			if (!curCharacter.startsWith('bf'))
+			if (!wasPlayer)
 				flipLeftRight();
 		}
-		else if (curCharacter.startsWith('bf'))
+		else if (wasPlayer)
 			flipLeftRight();
 
 
@@ -496,5 +496,10 @@ class Character extends FNFSprite
 	public function quickAnimAdd(name:String, anim:String)
 	{
 		animation.addByPrefix(name, anim, 24, false);
+	}
+
+	function loadScriptChar(char:String = 'bf')
+	{
+		var pushedChars:Array<String> = [];
 	}
 }

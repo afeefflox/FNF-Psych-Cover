@@ -257,9 +257,7 @@ class ChartingState extends MusicBeatState
 			PlayState.SONG = _song;
 		}
 
-		healthIconP1 = loadHealthIconFromCharacter(_song.player1);
-		healthIconP2 = loadHealthIconFromCharacter(_song.player2);
-		healthIconP3 = loadHealthIconFromCharacter(_song.gfVersion);
+
 
 		// Paths.clearMemory();
 
@@ -2636,7 +2634,10 @@ class ChartingState extends MusicBeatState
 	function updateHeads():Void
 	{
 
-
+		healthIconP1 = loadHealthIconFromCharacter(_song.player1);
+		healthIconP2 = loadHealthIconFromCharacter(_song.player2);
+		healthIconP3 = loadHealthIconFromCharacter(_song.gfVersion);
+		
 		if (_song.notes[curSec].mustHitSection)
 		{
 			leftIcon.changeIcon(healthIconP1);

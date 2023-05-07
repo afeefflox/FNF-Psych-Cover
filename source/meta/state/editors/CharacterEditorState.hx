@@ -87,7 +87,7 @@ class CharacterEditorState extends MusicBeatState
 	var changeBGbutton:FlxButton;
 	var leHealthIcon:HealthIcon;
 	var characterList:Array<String> = [];
-	var arrowList:Array<String> = ['normal', 'pixel'];
+	var arrowList:Array<String> = ['base', 'pixel'];
 	var cameraFollowPointer:FlxSprite;
 	var healthBarBG:FlxSprite;
 
@@ -1079,56 +1079,47 @@ class CharacterEditorState extends MusicBeatState
 				{
 					char.playerPositionArray[0] = positionXStepper.value;
 					char.x = char.playerPositionArray[0] + OFFSET_X + 100;
-					updatePointerPos();
 				}
 				else
 				{
 					char.positionArray[0] = positionXStepper.value;
 					char.x = char.positionArray[0] + OFFSET_X + 100;
-					updatePointerPos();
 				}
+				updatePointerPos();
 			}
 			else if(sender == positionYStepper)
 			{
 				if(char.isPlayer)
 				{
 					char.playerPositionArray[1] = positionYStepper.value;
-					char.x = char.playerPositionArray[1];
-					updatePointerPos();
+					char.y = char.playerPositionArray[1];
 				}
 				else
 				{
 					char.positionArray[1] = positionYStepper.value;
-					char.x = char.positionArray[1];
-					updatePointerPos();
+					char.y = char.positionArray[1];
 				}
+
+				updatePointerPos();
 			}
 			else if(sender == positionCameraXStepper)
 			{
 				if(char.isPlayer)
-				{
-					char.cameraPosition[0] = positionCameraXStepper.value;
-					updatePointerPos();
-				}
-				else
-				{
 					char.playerCameraPosition[0] = positionCameraXStepper.value;
-					updatePointerPos();
-				}
+				else
+					char.cameraPosition[0] = positionCameraXStepper.value;
+					
+
+				updatePointerPos();
 			}
 			else if(sender == positionCameraYStepper)
 			{
 				if(char.isPlayer)
-				{
-					char.cameraPosition[1] = positionCameraYStepper.value;
-					updatePointerPos();
-				}
-				else
-				{
 					char.playerCameraPosition[1] = positionCameraYStepper.value;
-					updatePointerPos();
-				}
-					
+				else
+					char.cameraPosition[1] = positionCameraYStepper.value;
+				
+				updatePointerPos();
 				
 			}
 			else if(sender == healthColorStepperR)
@@ -1397,6 +1388,7 @@ class CharacterEditorState extends MusicBeatState
 			scaleStepper.value = char.jsonScale;
 			flipXCheckBox.checked = char.originalFlipX;
 			noAntialiasingCheckBox.checked = char.noAntialiasing;
+			psychPlayerCheckBox.checked = char.wasPlayer;
 			resetHealthBarColor();
 			leHealthIcon.changeIcon(healthIconInputText.text);
 			if(char.isPlayer)
@@ -1798,7 +1790,11 @@ class CharacterEditorState extends MusicBeatState
 			}
 		}
 		//camMenu.zoom = FlxG.camera.zoom;
-		ghostChar.setPosition(char.x, char.y);
+		if(enabledOffset)
+		{
+			ghostChar.setPosition(char.x, char.y);
+		}
+		
 		super.update(elapsed);
 	}
 
