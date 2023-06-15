@@ -195,6 +195,8 @@ class FreeplayState extends MusicBeatState
 
 	var instPlaying:Int = -1;
 	public static var vocals:FlxSound = null;
+	public static var vocalsDad:Array<FlxSound> = null;
+	public static var vocalsBoyfriend:Array<FlxSound> = null;
 	var holdTime:Float = 0;
 	override function update(elapsed:Float)
 	{
@@ -303,16 +305,110 @@ class FreeplayState extends MusicBeatState
 				var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
 				PlayState.SONG = Song.loadFromJson(poop, songs[curSelected].songName.toLowerCase());
 				if (PlayState.SONG.needsVoices)
-					vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song));
-				else
-					vocals = new FlxSound();
+				{
+					var songKeyDad:String = '${Paths.formatToSongPath(PlayState.SONG.song)}/Voices' + PlayState.SONG.player2.toUpperCase();
+					var songKeyBF:String = '${Paths.formatToSongPath(PlayState.SONG.song)}/Voices' + PlayState.SONG.player1.toUpperCase();
+					var songKeyGF:String = '${Paths.formatToSongPath(PlayState.SONG.song)}/Voices' + PlayState.SONG.gfVersion.toUpperCase();
+		
+					var songKeyDadNormal:String = '${Paths.formatToSongPath(PlayState.SONG.song)}/VoicesDAD';
+					var songKeyBFNormal:String = '${Paths.formatToSongPath(PlayState.SONG.song)}/VoicesBF';
+					var songKeyGFNormal:String = '${Paths.formatToSongPath(PlayState.SONG.song)}/VoicesGF';
+					var songKeyMOMNormal:String = '${Paths.formatToSongPath(PlayState.SONG.song)}/VoicesMOM';
 
-				FlxG.sound.list.add(vocals);
+					if(Paths.fileExists(songKeyDad + '.' + Paths.SOUND_EXT, SOUND, false, 'songs') && Paths.fileExists(songKeyBF + '.' + Paths.SOUND_EXT, SOUND, false, 'songs'))
+					{
+						var customGF:FlxSound = null;
+						if(Paths.fileExists(songKeyGF + '.' + Paths.SOUND_EXT, SOUND, false, 'songs'))
+							customGF = new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyGF)); 
+						else
+							customGF = new FlxSound();
+		
+						var customMOM:FlxSound = null;
+						if(Paths.fileExists(songKeyMOMNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs'))
+							customMOM = new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyMOMNormal)); 
+						else
+							customMOM = new FlxSound();
+		
+						vocalsDad.push(new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyDad)));
+						vocalsBoyfriend.push(new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyBF)));
+			
+						vocalsDad.push(customGF);
+						vocalsBoyfriend.push(customGF);
+		
+						vocalsDad.push(customMOM);
+						vocalsBoyfriend.push(customMOM);
+					}
+					else if(Paths.fileExists(songKeyDadNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs') && Paths.fileExists(songKeyBFNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs'))
+					{
+						var customGF:FlxSound = null;
+						if(Paths.fileExists(songKeyGFNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs'))
+							customGF = new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyGFNormal)); 
+						else
+							customGF = new FlxSound();
+		
+						var customMOM:FlxSound = null;
+						if(Paths.fileExists(songKeyMOMNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs'))
+							customMOM = new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyMOMNormal)); 
+						else
+							customMOM = new FlxSound();
+		
+						vocalsDad.push(new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyDadNormal)));
+						vocalsBoyfriend.push(new FlxSound().loadEmbedded(Paths.returnSound('songs', songKeyBFNormal)));
+			
+						vocalsDad.push(customGF);
+						vocalsBoyfriend.push(customGF);
+		
+						vocalsDad.push(customMOM);
+						vocalsBoyfriend.push(customMOM);
+					}
+					else
+					{
+						vocalsDad.push(new FlxSound());
+						vocalsBoyfriend.push(new FlxSound());
+						vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song));
+					}
+				}
+				else
+				{
+					vocalsDad.push(new FlxSound());
+					vocalsBoyfriend.push(new FlxSound());
+					vocals = new FlxSound();
+				}
+
+				if(vocalsBoyfriend != null)
+				{
+					for(boyfriend in vocalsBoyfriend)
+					{
+						FlxG.sound.list.add(boyfriend);
+						boyfriend.play();
+						boyfriend.persist = true;
+						boyfriend.looped = true;
+						boyfriend.volume = 0.7;
+					}
+				}
+			
+				if(vocalsDad != null)
+				{
+					for(dad in vocalsDad)
+					{
+						FlxG.sound.list.add(dad);
+						dad.play();
+						dad.persist = true;
+						dad.looped = true;
+						dad.volume = 0.7;
+					}
+				}
+						
+				if(vocals != null)
+				{
+					FlxG.sound.list.add(vocals);
+					vocals.play();
+					vocals.persist = true;
+					vocals.looped = true;
+					vocals.volume = 0.7;
+				}
 				FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song), 0.7);
-				vocals.play();
-				vocals.persist = true;
-				vocals.looped = true;
-				vocals.volume = 0.7;
+
 				instPlaying = curSelected;
 				#end
 			}
@@ -377,6 +473,30 @@ class FreeplayState extends MusicBeatState
 			vocals.destroy();
 		}
 		vocals = null;
+
+		if(vocalsBoyfriend != null)
+		{
+			for(boyfriend in vocalsBoyfriend)
+			{
+				if(boyfriend != null) {
+					boyfriend.stop();
+					boyfriend.destroy();
+				}
+				boyfriend = null;
+			}
+		}
+		
+		if(vocalsDad != null)
+		{
+			for(dad in vocalsDad)
+			{
+				if(dad != null) {
+					dad.stop();
+					dad.destroy();
+				}
+				dad = null;
+			}
+		}
 	}
 
 	function changeDiff(change:Int = 0)

@@ -1248,6 +1248,43 @@ class ChartingState extends MusicBeatState
 		};
 		#end
 
+		#if MODS_ALLOWED
+		var directories:Array<String> = [Paths.mods('songs/' + Paths.formatToSongPath(_song.song) + '/'), Paths.mods(Paths.currentModDirectory + '/songs/' + Paths.formatToSongPath(_song.song) + '/'), Paths.getPreloadPath('songs/' + Paths.formatToSongPath(_song.song) + '/')];
+		for(mod in Paths.getGlobalMods())
+			directories.push(Paths.mods(mod + '/songs/' + Paths.formatToSongPath(_song.song) + '/'));
+		#else
+		var directories:Array<String> = [Paths.getPreloadPath('songs/' + Paths.formatToSongPath(_song.song) + '/')];
+		#end
+
+		var tempMap:Map<String, Bool> = new Map<String, Bool>();
+		var audios:Array<String> = [];
+
+		for (i in 0...directories.length) {
+			var directory:String = directories[i];
+			if(FileSystem.exists(directory)) {
+				for (file in FileSystem.readDirectory(directory)) {
+					var path = haxe.io.Path.join([directory, file]);
+					if (!FileSystem.isDirectory(path) && file.endsWith('.ogg')) {
+						var fileToCheck:String = file.substr(0, file.length - 4);
+						if(fileToCheck.startsWith('Voices') && !tempMap.exists(fileToCheck)) {
+							tempMap.set(fileToCheck, true);
+							audios.push(fileToCheck);
+						}
+					}
+				}
+			}
+		}
+
+		var currerntAudio:String = 'Voices';
+		var audioDropDown = new FlxUIDropDownMenuCustom(320, waveformUseVoices.y, FlxUIDropDownMenuCustom.makeStrIdLabelArray(audios, true), function(audio:String)
+		{
+			currerntAudio = audios[Std.parseInt(audio)];
+			loadAudioVocal(currerntAudio);
+			updateWaveform();
+		});
+		audioDropDown.selectedLabel = currerntAudio;
+		blockPressWhileScrolling.push(audioDropDown);
+
 		check_mute_inst = new FlxUICheckBox(10, 310, null, null, "Mute Instrumental (in editor)", 100);
 		check_mute_inst.checked = false;
 		check_mute_inst.callback = function()
@@ -1361,6 +1398,8 @@ class ChartingState extends MusicBeatState
 		tab_group_chart.add(new FlxText(metronomeOffsetStepper.x, metronomeOffsetStepper.y - 15, 0, 'Offset (ms):'));
 		tab_group_chart.add(new FlxText(instVolume.x, instVolume.y - 15, 0, 'Inst Volume'));
 		tab_group_chart.add(new FlxText(voicesVolume.x, voicesVolume.y - 15, 0, 'Voices Volume'));
+		tab_group_chart.add(new FlxText(audioDropDown.x, audioDropDown.y - 15, 0, 'Voices:'));
+		tab_group_chart.add(audioDropDown);
 		tab_group_chart.add(metronome);
 		tab_group_chart.add(disableAutoScrolling);
 		tab_group_chart.add(metronomeStepper);
@@ -1379,6 +1418,32 @@ class ChartingState extends MusicBeatState
 		tab_group_chart.add(playSoundBf);
 		tab_group_chart.add(playSoundDad);
 		UI_box.addGroup(tab_group_chart);
+	}
+
+	function loadAudioVocal(path:String):Void
+	{
+		if (FlxG.sound.music != null)
+		{
+			FlxG.sound.music.stop();
+		}
+
+		if(vocals != null) {
+			vocals.stop();
+			vocals.destroy();
+		}
+		vocals = null;
+
+		var file:Dynamic = Paths.returnSound('songs', '${Paths.formatToSongPath(currentSongName)}/$path');
+		vocals = new FlxSound();
+		if (Std.isOfType(file, Sound) || OpenFlAssets.exists(file)) {
+			vocals.loadEmbedded(file);
+			FlxG.sound.list.add(vocals);
+		}
+		generateSong();
+		FlxG.sound.music.pause();
+		Conductor.songPosition = sectionStartTime();
+		FlxG.sound.music.time = Conductor.songPosition;
+		
 	}
 
 	function loadSong():Void
@@ -2351,7 +2416,7 @@ class ChartingState extends MusicBeatState
 		}
 
 		if (FlxG.save.data.chart_waveformVoices) {
-			var sound:FlxSound = vocals;
+			var sound:FlxSound = vocals; //I think traget vocal lmao
 			if (sound._sound != null && sound._sound.__buffer != null) {
 				var bytes:Bytes = sound._sound.__buffer.data.toBytes();
 

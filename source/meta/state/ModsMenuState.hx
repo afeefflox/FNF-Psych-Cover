@@ -429,15 +429,87 @@ class ModsMenuState extends MusicBeatState
 					FreeplayState.vocals.fadeOut(0.3);
 					FreeplayState.vocals = null;
 				}
+
+				if(FreeplayState.vocalsBoyfriend != null)
+				{
+					for(boyfriend in FreeplayState.vocalsBoyfriend)
+					{
+						if(boyfriend != null) {
+							boyfriend.stop();
+							boyfriend.destroy();
+						}
+						boyfriend = null;
+					}
+				}
+					
+				if(FreeplayState.vocalsDad != null)
+				{
+					for(dad in FreeplayState.vocalsDad)
+					{
+						if(dad != null) {
+							dad.stop();
+							dad.destroy();
+						}
+						dad = null;
+					}
+				}
 				if(BETADCIUState.vocals != null)
 				{
 					BETADCIUState.vocals.fadeOut(0.3);
 					BETADCIUState.vocals = null;
 				}
+
+				if(BETADCIUState.vocalsBoyfriend != null)
+				{
+					for(boyfriend in BETADCIUState.vocalsBoyfriend)
+					{
+						if(boyfriend != null) {
+							boyfriend.stop();
+							boyfriend.destroy();
+						}
+						boyfriend = null;
+					}
+				}
+
+				if(BETADCIUState.vocalsDad != null)
+				{
+					for(dad in BETADCIUState.vocalsDad)
+					{
+						if(dad != null) {
+							dad.stop();
+							dad.destroy();
+						}
+						dad = null;
+					}
+				}
 				if(CoverState.vocals != null)
 				{
 					CoverState.vocals.fadeOut(0.3);
 					CoverState.vocals = null;
+				}
+
+				if(CoverState.vocalsBoyfriend != null)
+				{
+					for(boyfriend in CoverState.vocalsBoyfriend)
+					{
+						if(boyfriend != null) {
+							boyfriend.stop();
+							boyfriend.destroy();
+						}
+						boyfriend = null;
+					}
+				}
+	
+				if(CoverState.vocalsDad != null)
+				{
+					for(dad in CoverState.vocalsDad)
+					{
+						if(dad != null) {
+							dad.stop();
+							dad.destroy();
+						}
+						dad = null;
+					}
 				}
 				FlxG.camera.fade(FlxColor.BLACK, 0.5, false, FlxG.resetGame, false);
 			}

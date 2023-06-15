@@ -16,6 +16,7 @@ import util.script.*;
 import util.script.Globals.*;
 import flixel.FlxBasic;
 import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.group.FlxSpriteGroup;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.util.FlxTimer;
@@ -23,13 +24,13 @@ import util.CoolUtil;
 #if MODS_ALLOWED
 import sys.FileSystem;
 #end
-class Stage extends MusicBeatObject
+
+class Stage extends MusicBeatGroup
 {
     public var curStage:String;
     public static var instance:Stage;
 	public var luaArray:Array<FunkinLua> = [];
 	public var haxeArray:Array<FunkinHaxe> = [];
-
 	
 	public var sendMessage:Bool = false;
 	public var messageText:String = '';
@@ -52,6 +53,7 @@ class Stage extends MusicBeatObject
 
 	public function setStage(curStage:String)
 	{
+		destoryStageScript();
 		reloadGroups();
 
 		try
@@ -67,28 +69,89 @@ class Stage extends MusicBeatObject
 
 	public function reloadGroups()
 	{
-		layers.get('boyfriend').forEach(function(a:Dynamic)
+				
+		var i:Int = members.length-1;
+		while(i >= 0) {
+			var memb:FlxBasic = members[i];
+			if(memb != null) {
+				memb.kill();
+				remove(memb);
+				memb.destroy();
+			}
+			--i;
+		}
+
+		if(layers.get('boyfriend') != null)
 		{
-			if (a != null && !Std.isOfType(a, flixel.system.FlxSound))
-				remove(a);
-		});
-		layers.get('dad').forEach(function(a:Dynamic)
+			var i:Int = layers.get('boyfriend').members.length-1;
+			while(i >= 0) {
+				var memb:FlxBasic = layers.get('boyfriend').members[i];
+				if(memb != null) {
+					memb.kill();
+					layers.get('boyfriend').remove(memb);
+					memb.destroy();
+				}
+				--i;
+			}
+		}
+
+		if(layers.get('dad') != null)
 		{
-			if (a != null && !Std.isOfType(a, flixel.system.FlxSound))
-				remove(a);
-		});
-		layers.get('gf').forEach(function(a:Dynamic)
+			var i:Int = layers.get('dad').members.length-1;
+			while(i >= 0) {
+				var memb:FlxBasic = layers.get('dad').members[i];
+				if(memb != null) {
+					memb.kill();
+					layers.get('dad').remove(memb);
+					memb.destroy();
+				}
+				--i;
+			}
+		}
+
+		if(layers.get('gf') != null)
 		{
-			if (a != null && !Std.isOfType(a, flixel.system.FlxSound))
-				remove(a);
-		});
-		layers.get('foreground').forEach(function(a:Dynamic)
+			var i:Int = layers.get('gf').members.length-1;
+			while(i >= 0) {
+				var memb:FlxBasic = layers.get('gf').members[i];
+				if(memb != null) {
+					memb.kill();
+					layers.get('gf').remove(memb);
+					memb.destroy();
+				}
+				--i;
+			}
+		}
+
+		if(layers.get('foreground') != null)
 		{
-			if (a != null && !Std.isOfType(a, flixel.system.FlxSound))
-				remove(a);
-		});
+			var i:Int = layers.get('foreground').members.length-1;
+			while(i >= 0) {
+				var memb:FlxBasic = layers.get('foreground').members[i];
+				if(memb != null) {
+					memb.kill();
+					layers.get('foreground').remove(memb);
+					memb.destroy();
+				}
+				--i;
+			}
+		}
 	}
 
+	function destoryStageScript()
+	{
+		for (lua in luaArray) {
+			lua.call('onDestroy', []);
+			lua.stop();
+		}
+		luaArray = [];
+
+		for (lua in haxeArray) {
+			lua.call('destroy', []);
+			if(lua != null) lua = null;
+		}
+		haxeArray = [];
+	}
 
 	function callStageScript(curStage:String)
 	{

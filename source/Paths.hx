@@ -461,7 +461,7 @@ class Paths
 			localTrackedAssets.push(path);
 			return currentTrackedAssets.get(path);
 		}
-		trace('oh no $key is returning null NOOOO');
+		trace('oh no $key of image is returning null NOOOO');
 		return null;
 	}
 
@@ -469,7 +469,7 @@ class Paths
 	public static var currentTrackedSounds:Map<String, Sound> = [];
 	public static function returnSound(path:String, key:String, ?library:String) {
 		#if MODS_ALLOWED
-		var file:String = modsSounds(path, key, library);
+		var file:String = getModsPath('$path/$key.$SOUND_EXT', library);
 		if(FileSystem.exists(file)) {
 			if(!currentTrackedSounds.exists(file)) {
 				currentTrackedSounds.set(file, Sound.fromFile(file));
@@ -478,6 +478,7 @@ class Paths
 			return currentTrackedSounds.get(file);
 		}
 		#end
+		
 		// I hate this so god damn much
 		var gottenPath:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
 		gottenPath = gottenPath.substring(gottenPath.indexOf(':') + 1, gottenPath.length);
