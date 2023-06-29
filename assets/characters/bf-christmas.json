@@ -22,7 +22,7 @@
 				-7
 			],
 			"offsets": [
-				5,
+				38,
 				-6
 			],
 			"anim": "singLEFT",
@@ -52,7 +52,7 @@
 				30
 			],
 			"offsets": [
-				-46,
+				4,
 				27
 			],
 			"anim": "singUP",
@@ -67,7 +67,7 @@
 				-5
 			],
 			"offsets": [
-				-48,
+				-38,
 				-7
 			],
 			"anim": "singRIGHT",
@@ -82,7 +82,7 @@
 				20
 			],
 			"offsets": [
-				7,
+				37,
 				19
 			],
 			"anim": "singLEFTmiss",
@@ -112,7 +112,7 @@
 				29
 			],
 			"offsets": [
-				-46,
+				-6,
 				27
 			],
 			"anim": "singUPmiss",
@@ -127,8 +127,8 @@
 				22
 			],
 			"offsets": [
-				-44,
-				22
+				-37,
+				19
 			],
 			"anim": "singRIGHTmiss",
 			"fps": 24,
@@ -142,7 +142,7 @@
 				6
 			],
 			"offsets": [
-				-3,
+				-2,
 				5
 			],
 			"anim": "hey",
@@ -175,6 +175,11 @@
 		0,
 		0
 	],
+	"player_position": [
+		0,
+		350
+	],
 	"sing_duration": 4,
+	"isPlayerChar": true,
 	"scale": 1
 }
