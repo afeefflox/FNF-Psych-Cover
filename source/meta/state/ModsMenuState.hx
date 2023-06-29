@@ -17,15 +17,16 @@ import flixel.tweens.FlxTween;
 import lime.utils.Assets;
 import flixel.system.FlxSound;
 import openfl.utils.Assets as OpenFlAssets;
+#if sys
 import sys.io.File;
 import sys.FileSystem;
+#end
 import haxe.Json;
 import haxe.format.JsonParser;
 import openfl.display.BitmapData;
 import flash.geom.Rectangle;
 import flixel.ui.FlxButton;
 import flixel.FlxBasic;
-import sys.io.File;
 import MusicBeat;
 import util.WeekData;
 import objects.AttachedSprite;

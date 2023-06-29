@@ -6096,7 +6096,7 @@ class PlayState extends MusicBeatState
 		}
 
 
-		if(vocalsBoyfriend != null && !playerStrums.autoplay)
+		if(vocalsBoyfriend != null)
 		{
 			for(boyfriend in vocalsBoyfriend)
 			{
@@ -6107,7 +6107,7 @@ class PlayState extends MusicBeatState
 				}
 			}
 		}
-		if(vocalsDad != null && !opponentStrums.autoplay)
+		if(vocalsDad != null)
 		{
 			for(dad in vocalsDad)
 			{
