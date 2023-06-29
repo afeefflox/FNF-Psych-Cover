@@ -30,6 +30,7 @@ using StringTools;
 class MainMenuState extends MusicBeatState
 {
 	public static var psychEngineVersion:String = '0.6.3'; //This is also used for Discord RPC
+	public static var psychCoverEngineVersion:String = '0.6'; //This is also used for Discord RPC
 	public static var curSelected:Int = 0;
 
 	var menuItems:FlxTypedGroup<FlxSprite>;
@@ -138,10 +139,18 @@ class MainMenuState extends MusicBeatState
 		versionShit.scrollFactor.set();
 		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(versionShit);
+
 		var versionShit:FlxText = new FlxText(12, FlxG.height - 24, 0, "Friday Night Funkin' v" + Application.current.meta.get('version'), 12);
 		versionShit.scrollFactor.set();
 		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(versionShit);
+
+		var versionShit:FlxText = new FlxText(12, FlxG.height - 64, 0, "Psych Cover Engine v" + psychCoverEngineVersion, 12);
+		versionShit.scrollFactor.set();
+		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		add(versionShit);
+
+		
 
 		// NG.core.calls.event.logEvent('swag').send();
 
@@ -182,6 +191,55 @@ class MainMenuState extends MusicBeatState
 			if(FreeplayState.vocals != null) FreeplayState.vocals.volume += 0.5 * elapsed;
 			if(CoverState.vocals != null) CoverState.vocals.volume += 0.5 * elapsed;
 			if(BETADCIUState.vocals != null) BETADCIUState.vocals.volume += 0.5 * elapsed;
+
+			//SPLIT VOCALS
+			if(BETADCIUState.vocalsBoyfriend != null)
+			{
+				for(boyfriend in BETADCIUState.vocalsBoyfriend)
+				{
+					if(boyfriend != null) boyfriend.volume += 0.5 * elapsed;
+				}
+			}
+
+			if(CoverState.vocalsBoyfriend != null)
+			{
+				for(boyfriend in CoverState.vocalsBoyfriend)
+				{
+					if(boyfriend != null) boyfriend.volume += 0.5 * elapsed;
+				}
+			}
+
+			if(FreeplayState.vocalsBoyfriend != null)
+			{
+				for(boyfriend in FreeplayState.vocalsBoyfriend)
+				{
+					if(boyfriend != null) boyfriend.volume += 0.5 * elapsed;
+				}
+			}
+
+			if(BETADCIUState.vocalsDad != null)
+			{
+				for(dad in BETADCIUState.vocalsDad)
+				{
+					if(dad != null) dad.volume += 0.5 * elapsed;
+				}
+			}
+
+			if(CoverState.vocalsDad != null)
+			{
+				for(dad in CoverState.vocalsDad)
+				{
+					if(dad != null) dad.volume += 0.5 * elapsed;
+				}
+			}
+
+			if(FreeplayState.vocalsDad != null)
+			{
+				for(dad in FreeplayState.vocalsDad)
+				{
+					if(dad != null) dad.volume += 0.5 * elapsed;
+				}
+			}
 		}
 
 		var lerpVal:Float = CoolUtil.boundTo(elapsed * 7.5, 0, 1);

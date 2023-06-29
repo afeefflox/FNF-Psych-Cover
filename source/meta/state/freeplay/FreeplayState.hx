@@ -195,8 +195,8 @@ class FreeplayState extends MusicBeatState
 
 	var instPlaying:Int = -1;
 	public static var vocals:FlxSound = null;
-	public static var vocalsDad:Array<FlxSound> = null;
-	public static var vocalsBoyfriend:Array<FlxSound> = null;
+	public static var vocalsDad:Array<FlxSound> = [];
+	public static var vocalsBoyfriend:Array<FlxSound> = [];
 	var holdTime:Float = 0;
 	override function update(elapsed:Float)
 	{
@@ -298,6 +298,8 @@ class FreeplayState extends MusicBeatState
 			{
 				#if PRELOAD_ALL
 				destroyFreeplayVocals();
+				vocalsDad = [];
+				vocalsBoyfriend = [];
 				CoverState.destroyFreeplayVocals();
 				BETADCIUState.destroyFreeplayVocals();
 				FlxG.sound.music.volume = 0;
@@ -363,15 +365,11 @@ class FreeplayState extends MusicBeatState
 					}
 					else
 					{
-						vocalsDad.push(new FlxSound());
-						vocalsBoyfriend.push(new FlxSound());
 						vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song));
 					}
 				}
 				else
 				{
-					vocalsDad.push(new FlxSound());
-					vocalsBoyfriend.push(new FlxSound());
 					vocals = new FlxSound();
 				}
 
@@ -380,10 +378,6 @@ class FreeplayState extends MusicBeatState
 					for(boyfriend in vocalsBoyfriend)
 					{
 						FlxG.sound.list.add(boyfriend);
-						boyfriend.play();
-						boyfriend.persist = true;
-						boyfriend.looped = true;
-						boyfriend.volume = 0.7;
 					}
 				}
 			
@@ -392,22 +386,52 @@ class FreeplayState extends MusicBeatState
 					for(dad in vocalsDad)
 					{
 						FlxG.sound.list.add(dad);
-						dad.play();
-						dad.persist = true;
-						dad.looped = true;
-						dad.volume = 0.7;
 					}
 				}
 						
 				if(vocals != null)
 				{
 					FlxG.sound.list.add(vocals);
+				}
+
+
+				FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song), 0.7);
+
+				if(vocals != null)
+				{
 					vocals.play();
 					vocals.persist = true;
 					vocals.looped = true;
 					vocals.volume = 0.7;
 				}
-				FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song), 0.7);
+
+				if(vocalsDad != null)
+				{
+					for(dad in vocalsDad)
+					{
+						if(dad != null)
+						{
+							dad.play();
+							dad.persist = true;
+							dad.looped = true;
+							dad.volume = 0.7;
+						}
+					}
+				}
+
+				if(vocalsBoyfriend != null)
+				{
+					for(boyfriend in vocalsBoyfriend)
+					{
+						if(boyfriend != null)
+						{
+							boyfriend.play();
+							boyfriend.persist = true;
+							boyfriend.looped = true;
+							boyfriend.volume = 0.7;
+						}
+					}
+				}
 
 				instPlaying = curSelected;
 				#end

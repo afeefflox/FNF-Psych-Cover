@@ -550,10 +550,10 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.add(new FlxText(charDropDown.x, charDropDown.y - 18, 0, 'Character:'));
 		tab_group.add(check_player);
 		tab_group.add(reloadCharacter);
-		tab_group.add(charDropDown);
 		tab_group.add(reloadCharacter);
 		tab_group.add(templateCharacter);
 		tab_group.add(characterShowCheckBox);
+		tab_group.add(charDropDown);
 		UI_box.addGroup(tab_group);
 	}
 
@@ -593,9 +593,9 @@ class CharacterEditorState extends MusicBeatState
 		});
 
 		tab_group.add(new FlxText(ghostCharDropDown.x, ghostCharDropDown.y - 18, 0, 'Ghost Character:'));
-		tab_group.add(ghostCharDropDown);
 		tab_group.add(reloadCharacter);
 		tab_group.add(check_offset);
+		tab_group.add(ghostCharDropDown);
 		UI_box.addGroup(tab_group);
 	}
 

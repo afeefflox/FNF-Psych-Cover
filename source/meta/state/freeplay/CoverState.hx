@@ -296,6 +296,8 @@ class CoverState extends MusicBeatState
 			{
 				#if PRELOAD_ALL
 				destroyFreeplayVocals();
+				vocalsDad = [];
+				vocalsBoyfriend = [];
 				CoverState.destroyFreeplayVocals();
 				BETADCIUState.destroyFreeplayVocals();
 				FlxG.sound.music.volume = 0;

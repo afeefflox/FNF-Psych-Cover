@@ -441,7 +441,7 @@ class ModsMenuState extends MusicBeatState
 						boyfriend = null;
 					}
 				}
-					
+
 				if(FreeplayState.vocalsDad != null)
 				{
 					for(dad in FreeplayState.vocalsDad)
@@ -453,6 +453,10 @@ class ModsMenuState extends MusicBeatState
 						dad = null;
 					}
 				}
+
+				FreeplayState.vocalsBoyfriend = [];
+				FreeplayState.vocalsDad = [];
+
 				if(BETADCIUState.vocals != null)
 				{
 					BETADCIUState.vocals.fadeOut(0.3);
@@ -482,6 +486,10 @@ class ModsMenuState extends MusicBeatState
 						dad = null;
 					}
 				}
+
+				BETADCIUState.vocalsBoyfriend = [];
+				BETADCIUState.vocalsDad = [];
+
 				if(CoverState.vocals != null)
 				{
 					CoverState.vocals.fadeOut(0.3);
@@ -511,6 +519,10 @@ class ModsMenuState extends MusicBeatState
 						dad = null;
 					}
 				}
+
+				CoverState.vocalsBoyfriend = [];
+				CoverState.vocalsDad = [];
+
 				FlxG.camera.fade(FlxColor.BLACK, 0.5, false, FlxG.resetGame, false);
 			}
 			else

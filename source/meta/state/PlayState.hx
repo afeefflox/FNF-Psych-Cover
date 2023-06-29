@@ -510,6 +510,20 @@ class PlayState extends MusicBeatState
 			}
 		}
 		SONG.stage = curStage;
+		GameOverSubstate.resetVariables();
+		switch(curStage)
+		{
+			case 'school'|'schoolEvil':
+				GameOverSubstate.characterName = 'bf-pixel-dead';
+				GameOverSubstate.deathSoundName = 'stages/pixel/fnf_loss_sfx';
+				GameOverSubstate.loopSoundName = 'stages/pixel/gameOver';
+				GameOverSubstate.endSoundName = 'stages/pixel/gameOverEnd';
+			case 'tank':
+				if(songName == 'stress')
+					GameOverSubstate.characterName = 'bf-holding-gf-dead';
+				else
+					GameOverSubstate.characterName = 'bf-dead';
+		}
 
 		loadStageData(curStage);
 		stageGroup = new FlxTypedGroup<FlxBasic>();
@@ -521,13 +535,6 @@ class PlayState extends MusicBeatState
 		boyfriendGroup = new FlxSpriteGroup(BF_X, BF_Y);
 		dadGroup = new FlxSpriteGroup(DAD_X, DAD_Y);
 		gfGroup = new FlxSpriteGroup(GF_X, GF_Y);
-
-
-		switch(Paths.formatToSongPath(SONG.song))
-		{
-			case 'stress':
-				GameOverSubstate.characterName = 'bf-holding-gf-dead';
-		}
 
 		if(isPixelStage) {
 			introSoundsSuffix = 'pixel/';
@@ -992,7 +999,7 @@ class PlayState extends MusicBeatState
 							startCountdown();
 						}
 					});
-					FlxG.sound.play(Paths.soundRandom('thunder_', 1, 2));
+					FlxG.sound.play(Paths.soundRandom('stages/spooky/thunder_', 1, 2));
 					if(gf != null) gf.playAnim('scared', true);
 					boyfriend.playAnim('scared', true);
 
@@ -1009,7 +1016,7 @@ class PlayState extends MusicBeatState
 							remove(blackScreen);
 						}
 					});
-					FlxG.sound.play(Paths.sound('Lights_Turn_On'));
+					FlxG.sound.play(Paths.sound('stages/mall/Lights_Turn_On'));
 					snapCamFollowToPos(400, -2050);
 					FlxG.camera.focusOn(camFollow);
 					FlxG.camera.zoom = 1.5;
@@ -1027,7 +1034,7 @@ class PlayState extends MusicBeatState
 						});
 					});
 				case 'senpai' | 'roses' | 'thorns':
-					if(daSong == 'roses') FlxG.sound.play(Paths.sound('ANGRY'));
+					if(daSong == 'roses') FlxG.sound.play(Paths.sound('stages/school/ANGRY_TEXT_BOX'));
 					schoolIntro(doof);
 
 				case 'ugh' | 'guns' | 'stress':
@@ -1429,6 +1436,7 @@ class PlayState extends MusicBeatState
 		trace('Anim speed: ' + FlxAnimationController.globalSpeed);
 		Conductor.safeZoneOffset = (ClientPrefs.safeFrames / 60) * 1000 * value;
 		setOnLuas('playbackRate', playbackRate);
+		setOnHaxes('playbackRate', playbackRate);
 		return value;
 	}
 
@@ -1824,7 +1832,7 @@ class PlayState extends MusicBeatState
 		red.scrollFactor.set();
 
 		var senpaiEvil:FlxSprite = new FlxSprite();
-		senpaiEvil.frames = Paths.getSparrowAtlas('stages/school/weeb/senpaiCrazy');
+		senpaiEvil.frames = Paths.getSparrowAtlas('stages/school/senpaiCrazy');
 		senpaiEvil.animation.addByPrefix('idle', 'Senpai Pre Explosion', 24, false);
 		senpaiEvil.setGraphicSize(Std.int(senpaiEvil.width * 6));
 		senpaiEvil.scrollFactor.set();
@@ -1870,7 +1878,7 @@ class PlayState extends MusicBeatState
 							else
 							{
 								senpaiEvil.animation.play('idle');
-								FlxG.sound.play(Paths.sound('Senpai_Dies'), 1, false, null, true, function()
+								FlxG.sound.play(Paths.sound('stages/school/Senpai_Dies'), 1, false, null, true, function()
 								{
 									remove(senpaiEvil);
 									remove(red);
@@ -4878,7 +4886,7 @@ class PlayState extends MusicBeatState
 						add(blackShit);
 						camHUD.visible = false;
 
-						FlxG.sound.play(Paths.sound('Lights_Shut_off'));
+						FlxG.sound.play(Paths.sound('stages/mall/Lights_Shut_off'));
 					}
 
 					FlxTransitionableState.skipNextTransIn = true;
@@ -5000,14 +5008,15 @@ class PlayState extends MusicBeatState
 			pixelShitPart2 = '-pixel';
 		}
 
-		Paths.image(pixelShitPart1 + "sick" + pixelShitPart2);
-		Paths.image(pixelShitPart1 + "good" + pixelShitPart2);
-		Paths.image(pixelShitPart1 + "bad" + pixelShitPart2);
-		Paths.image(pixelShitPart1 + "shit" + pixelShitPart2);
-		Paths.image(pixelShitPart1 + "combo" + pixelShitPart2);
-		
+		Paths.image("judegetment/" + pixelShitPart1 + "sick-fc" + pixelShitPart2);
+		Paths.image("judegetment/" + pixelShitPart1 + "sick" + pixelShitPart2);
+		Paths.image("judegetment/" + pixelShitPart1 + "good" + pixelShitPart2);
+		Paths.image("judegetment/" + pixelShitPart1 + "bad" + pixelShitPart2);
+		Paths.image("judegetment/" + pixelShitPart1 + "shit" + pixelShitPart2);
+		Paths.image("combo/" + pixelShitPart1 + "combo" + pixelShitPart2);
 		for (i in 0...10) {
-			Paths.image(pixelShitPart1 + 'num' + i + pixelShitPart2);
+			Paths.image("combo/" + pixelShitPart1 + 'num' + i + pixelShitPart2);
+			Paths.image("combo/" + pixelShitPart1 + 'FC/' + 'num' + i + pixelShitPart2);
 		}
 	}
 
@@ -5174,7 +5183,7 @@ class PlayState extends MusicBeatState
 				default:
 					numScore.loadGraphic(Paths.image('combo/' + pixelShitPart1 + 'num' + Std.int(i) + pixelShitPart2));
 				case 'SFC':
-					numScore.loadGraphic(Paths.image('combo/FC/' + pixelShitPart1 + 'num' + Std.int(i) + pixelShitPart2));
+					numScore.loadGraphic(Paths.image('combo/' + pixelShitPart1 + 'FC/'  + 'num' + Std.int(i) + pixelShitPart2));
 			}
 			numScore.cameras = [camHUD];
 			numScore.screenCenter();
@@ -5969,9 +5978,10 @@ class PlayState extends MusicBeatState
 		
 		if(character != null)
 		{
-			if(character.existsOffsets('singLEFT'  + altAnim + suffix) && 
-				character.existsOffsets('singUP'  + altAnim + suffix) &&
-			    character.existsOffsets('singDOWN'  + altAnim + suffix) &&
+			//I hate ugh and Stress Song
+			if(character.existsOffsets('singLEFT'  + altAnim + suffix) || 
+				character.existsOffsets('singUP'  + altAnim + suffix) ||
+			    character.existsOffsets('singDOWN'  + altAnim + suffix) ||
 				character.existsOffsets('singRIGHT'  + altAnim + suffix))
 			{
 				character.playAnim(animToPlay, true);
