@@ -310,7 +310,7 @@ class Character extends FNFSprite
 
 	override function update(elapsed:Float)
 	{
-		if(!debugMode)
+		if(!debugMode && animation.curAnim != null)
 		{
 			if(heyTimer > 0)
 			{

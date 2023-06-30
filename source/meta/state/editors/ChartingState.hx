@@ -530,11 +530,11 @@ class ChartingState extends MusicBeatState
 		stepperSpeed.name = 'song_speed';
 		blockPressWhileTypingOnStepper.push(stepperSpeed);
 		#if MODS_ALLOWED
-		var directories:Array<String> = [Paths.mods('characters/data/'), Paths.mods(Paths.currentModDirectory + '/characters/data/'), Paths.getPreloadPath('characters/data/')];
+		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Paths.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
 		for(mod in Paths.getGlobalMods())
-			directories.push(Paths.mods(mod + '/characters/data/'));
+			directories.push(Paths.mods(mod + '/characters/'));
 		#else
-		var directories:Array<String> = [Paths.getPreloadPath('characters/data/')];
+		var directories:Array<String> = [Paths.getPreloadPath('characters/')];
 		#end
 
 		var tempMap:Map<String, Bool> = new Map<String, Bool>();

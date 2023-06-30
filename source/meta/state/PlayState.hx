@@ -3628,7 +3628,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		if (generatedMusic && !inCutscene)
+		if (generatedMusic)
 		{
 			if(!inCutscene)
 			{
@@ -3744,7 +3744,7 @@ class PlayState extends MusicBeatState
 				//Jesus fuck this took me so much mother fucking time AAAAAAAAAA
 				if(strumScroll && daNote.isSustainNote)
 				{
-					if (daNote.animation.curAnim.name.endsWith('end')) {
+					if (daNote.animation.curAnim != null && daNote.animation.curAnim.name.endsWith('end')) {
 						daNote.y += 10.5 * (fakeCrochet / 400) * 1.5 * songSpeed + (46 * (songSpeed - 1));
 						daNote.y -= 46 * (1 - (fakeCrochet / 600)) * songSpeed;
 						switch(daNote.style)
@@ -3813,12 +3813,8 @@ class PlayState extends MusicBeatState
 		var fakeCrochet:Float = (60 / SONG.bpm) * 1000;
 		notes.forEachAlive(function(daNote:Note)
 		{
-			var strumGroup:StrumLineNote = null;
-
-			if(!daNote.mustPress) 
-				strumGroup = opponentStrums;
-			else
-				strumGroup = playerStrums;
+			var strumGroup:StrumLineNote = playerStrums;
+			if(!daNote.mustPress) strumGroup = opponentStrums;
 
 			var strumX:Float = strumGroup.members[daNote.noteData].x;
 			var strumY:Float = strumGroup.members[daNote.noteData].y;
@@ -3837,7 +3833,6 @@ class PlayState extends MusicBeatState
 			else
 				daNote.distance = (-0.45 * (Conductor.songPosition - daNote.strumTime) * songSpeed * daNote.multSpeed);
 
-
 			var angleDir = strumDirection * Math.PI / 180;
 			if (daNote.copyAngle)
 				daNote.angle = strumDirection - 90 + strumAngle;
@@ -3855,28 +3850,28 @@ class PlayState extends MusicBeatState
 				//Jesus fuck this took me so much mother fucking time AAAAAAAAAA
 				if(strumScroll && daNote.isSustainNote)
 				{
-					if (daNote.animation.curAnim.name.endsWith('end')) {
+					//Idk Wtf is problem this stupid sustain note code bruh
+					if (daNote.animation.curAnim != null && daNote.animation.curAnim.name.endsWith('end')) {
 						daNote.y += 10.5 * (fakeCrochet / 400) * 1.5 * songSpeed + (46 * (songSpeed - 1));
 						daNote.y -= 46 * (1 - (fakeCrochet / 600)) * songSpeed;
-						
 						switch(daNote.style)
 						{
-							default:
-								daNote.y -= 19;
 							case 'pixel':
 								daNote.y += 8 + (6 - daNote.originalHeightForCalcs) * PlayState.daPixelZoom;
+							default:
+								daNote.y -= 19;
 						}
+						daNote.y += (Note.swagWidth / 2) - (60.5 * (songSpeed - 1));
+						daNote.y += 27.5 * ((SONG.bpm / 100) - 1) * (songSpeed - 1);
 					}
-					daNote.y += (Note.swagWidth / 2) - (60.5 * (songSpeed - 1));
-					daNote.y += 27.5 * ((SONG.bpm / 100) - 1) * (songSpeed - 1);
 				}
 			}
 
 			mainControls(daNote, strumGroup);
 
 			var center:Float = strumY + Note.swagWidth / 2;
-			if(strumGroup.members[daNote.noteData].sustainReduce && daNote.isSustainNote && (daNote.mustPress || !daNote.ignoreNote) && 
-				(!daNote.mustPress || (daNote.wasGoodHit || (daNote.prevNote.wasGoodHit && !daNote.canBeHit))))
+			if(strumGroup.members[daNote.noteData].sustainReduce && daNote.isSustainNote && (daNote.mustPress || !daNote.ignoreNote) &&
+                (!daNote.mustPress || (daNote.wasGoodHit || (daNote.prevNote.wasGoodHit && !daNote.canBeHit))))
 			{
 				if (strumScroll)
 				{
@@ -3885,7 +3880,6 @@ class PlayState extends MusicBeatState
 						var swagRect = new FlxRect(0, 0, daNote.frameWidth, daNote.frameHeight);
 						swagRect.height = (center - daNote.y) / daNote.scale.y;
 						swagRect.y = daNote.frameHeight - swagRect.height;
-
 						daNote.clipRect = swagRect;
 					}
 				}
@@ -3896,13 +3890,11 @@ class PlayState extends MusicBeatState
 						var swagRect = new FlxRect(0, 0, daNote.width / daNote.scale.x, daNote.height / daNote.scale.y);
 						swagRect.y = (center - daNote.y) / daNote.scale.y;
 						swagRect.height -= swagRect.y;
-
 						daNote.clipRect = swagRect;
 					}
 				}
 			}
 
-			// Kill extremely late notes and cause misses
 			if (Conductor.songPosition > noteKillOffset + daNote.strumTime)
 			{
 				if (!strumGroup.autoplay &&!daNote.ignoreNote && !endingSong && (daNote.tooLate || !daNote.wasGoodHit)) {
@@ -5781,7 +5773,7 @@ class PlayState extends MusicBeatState
 			}
 
 			var time:Float = 0.15;
-			if(note.isSustainNote && !note.animation.curAnim.name.endsWith('end')) {
+			if(note.animation.curAnim != null && note.isSustainNote && !note.animation.curAnim.name.endsWith('end')) {
 				time += 0.15;
 			}
 
@@ -5909,7 +5901,7 @@ class PlayState extends MusicBeatState
 			if(chararterStrums.autoplay)
 			{
 				var time:Float = 0.15;
-				if(note.isSustainNote && !note.animation.curAnim.name.endsWith('end')) {
+				if(note.animation.curAnim != null && note.isSustainNote && !note.animation.curAnim.name.endsWith('end')) {
 					time += 0.15;
 				}
 	

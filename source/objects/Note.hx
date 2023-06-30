@@ -380,16 +380,17 @@ class Note extends FlxSprite
 		if(isSustainNote)
 		{
 			scale.y = 1;
-			if(!animation.curAnim.name.endsWith('end'))
+			if(animation.curAnim != null && !animation.curAnim.name.endsWith('end'))
 			{
 				scale.y = scale.y * Conductor.stepCrochet / 100 * 1.05;
 				scale.y = scale.y * PlayState.instance.songSpeed;
-			}
+				
+				if(style == 'pixel')
+				{
+					scale.y = scale.y * 1.19;
+					scale.y = scale.y * 6;
+				}
 
-			if(style == 'pixel')
-			{
-				scale.y = scale.y * 1.19;
-				scale.y = scale.y * 6;
 			}
 			updateHitbox();			
 		}
