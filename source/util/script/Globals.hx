@@ -91,7 +91,7 @@ class Globals {
 
 	//Better optimized than using some getProperty shit or idk
 	public static function cameraFromString(cam:String):FlxCamera {
-		switch(cam.toLowerCase()) {
+		switch(cam.toLowerCase().trim()) {
 			case 'camhud' | 'hud': return PlayState.instance.camHUD;
 			case 'camother' | 'other': return PlayState.instance.camOther;
 		}
