@@ -3,6 +3,7 @@ package util;
 import util.Song.SwagSong;
 import meta.state.PlayState;
 import objects.Note;
+import flixel.FlxG;
 /**
  * ...
  * @author
@@ -18,7 +19,7 @@ typedef BPMChangeEvent =
 
 class Conductor
 {
-	public static var bpm:Float = 100;
+	public static var bpm(default, set):Float = 100;
 	public static var crochet:Float = ((60 / bpm) * 1000); // beats in milliseconds
 	public static var stepCrochet:Float = crochet / 4; // steps in milliseconds
 	public static var songPosition:Float=0;
@@ -34,9 +35,9 @@ class Conductor
 	{
 	}
 
-	public static function judgeNote(note:Note, diff:Float=0):Rating // die
+	public static function judgeNote(arr:Array<Rating>, diff:Float=0):Rating // die
 	{
-		var data:Array<Rating> = PlayState.instance.ratingsData; //shortening cuz fuck u
+		var data:Array<Rating> = arr;
 		for(i in 0...data.length-1) //skips last window (Shit)
 		{
 			if (diff <= data[i].hitWindow)
@@ -151,12 +152,12 @@ class Conductor
 		return (60/bpm)*1000;
 	}
 
-	public static function changeBPM(newBpm:Float)
-	{
-		bpm = newBpm;
-
+	public static function set_bpm(newBPM:Float):Float {
+		bpm = newBPM;
 		crochet = calculateCrochet(bpm);
 		stepCrochet = crochet / 4;
+
+		return bpm = newBPM;
 	}
 }
 
@@ -164,26 +165,26 @@ class Rating
 {
 	public var name:String = '';
 	public var image:String = '';
-	public var counter:String = '';
 	public var hitWindow:Null<Int> = 0; //ms
 	public var ratingMod:Float = 1;
 	public var score:Int = 350;
 	public var noteSplash:Bool = true;
+	public var hits:Int = 0;
 
 	public function new(name:String)
 	{
 		this.name = name;
 		this.image = name;
-		this.counter = name + 's';
-		this.hitWindow = Reflect.field(ClientPrefs, name + 'Window');
-		if(hitWindow == null)
+		this.hitWindow = 0;
+
+		var window:String = name + 'Window';
+
+		try
 		{
-			hitWindow = 0;
+			this.hitWindow = Reflect.field(ClientPrefs, window);
 		}
+		catch(e) FlxG.log.error(e);
 	}
 
-	public function increase(blah:Int = 1)
-	{
-		Reflect.setField(PlayState.instance, counter, Reflect.field(PlayState.instance, counter) + blah);
-	}
+	
 }

@@ -13,7 +13,12 @@
     {
       "name": "flixel",
       "type": "haxelib",
-      "version": "5.2.2"
+      "version": null
+    },
+    {
+      "name": "hscript",
+      "type": "haxelib",
+      "version": null
     },
     {
       "name": "flixel-addons",
@@ -48,14 +53,7 @@
     {
       "name": "hxCodec",
       "type": "haxelib",
-      "version": "2.5.1"
-    },
-    {
-      "name": "hscript-improved",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://www.github.com/FNF-CNE-Devs/hscript-improved"
+      "version": null
     },
     {
       "name": "hxcpp-debug-server",
@@ -70,18 +68,11 @@
       "url": "https://github.com/Aidan63/linc_discord-rpc"
     },
     {
-      "name": "hscript-ex",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://github.com/ianharrigan/hscript-ex"
-    },
-    {
       "name": "linc_luajit",
       "type": "git",
       "dir": null,
       "ref": "master",
-      "url": "https://github.com/nebulazorua/linc_luajit"
+      "url": "https://github.com/superpowers04/linc_luajit"
     },
     {
       "name": "SScript",

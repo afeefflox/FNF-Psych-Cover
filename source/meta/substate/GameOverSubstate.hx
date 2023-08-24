@@ -17,7 +17,7 @@ import objects.Character;
 import util.Conductor;
 import util.CoolUtil;
 import util.WeekData;
-
+import util.Mods;
 class GameOverSubstate extends MusicBeatSubstate
 {
 	public var boyfriend:Character;
@@ -32,7 +32,7 @@ class GameOverSubstate extends MusicBeatSubstate
 	public static var deathSoundName:String = 'base/fnf_loss_sfx';
 	public static var loopSoundName:String = 'stages/base/gameOver';
 	public static var endSoundName:String = 'stages/base/gameOverEnd';
-	public static var bpm:Float = 100;
+	//public static var bpm:Float = 100;
 	public static var instance:GameOverSubstate;
 
 	public static function resetVariables() {
@@ -40,7 +40,16 @@ class GameOverSubstate extends MusicBeatSubstate
 		deathSoundName = 'base/fnf_loss_sfx';
 		loopSoundName = 'stages/base/gameOver';
 		endSoundName = 'stages/base/gameOverEnd';
-		bpm = 100;
+
+		var _song = PlayState.SONG;
+		if(_song != null)
+		{
+			if(_song.gameOverChar != null && _song.gameOverChar.trim().length > 0) characterName = _song.gameOverChar;
+			if(_song.gameOverSound != null && _song.gameOverSound.trim().length > 0) deathSoundName = _song.gameOverSound;
+			if(_song.gameOverLoop != null && _song.gameOverLoop.trim().length > 0) loopSoundName = _song.gameOverLoop;
+			if(_song.gameOverEnd != null && _song.gameOverEnd.trim().length > 0) endSoundName = _song.gameOverEnd;
+		}
+		//bpm = 100;
 	}
 
 	override function create()
@@ -78,7 +87,7 @@ class GameOverSubstate extends MusicBeatSubstate
 		camFollow = new FlxPoint(boyfriend.getGraphicMidpoint().x, boyfriend.getGraphicMidpoint().y);
 
 		FlxG.sound.play(Paths.sound(deathSoundName));
-		Conductor.changeBPM(bpm);
+		//Conductor.changeBPM(bpm);
 		// FlxG.camera.followLerp = 1;
 		// FlxG.camera.focusOn(FlxPoint.get(FlxG.width / 2, FlxG.height / 2));
 		FlxG.camera.scroll.set();
@@ -115,7 +124,7 @@ class GameOverSubstate extends MusicBeatSubstate
 			PlayState.seenCutscene = false;
 			PlayState.chartingMode = false;
 
-			WeekData.loadTheFirstEnabledMod();
+			Mods.loadTheFirstEnabledMod();
 			if (PlayState.isStoryMode)
 				MusicBeatState.switchState(new StoryMenuState());
 			else if (PlayState.isBETADCIU)
@@ -170,13 +179,6 @@ class GameOverSubstate extends MusicBeatSubstate
 		}
 		PlayState.instance.callOnLuas('onUpdatePost', [elapsed]);
 		PlayState.instance.callOnHaxes('updatePost', []);
-	}
-
-	override function beatHit()
-	{
-		super.beatHit();
-
-		//FlxG.log.add('beat');
 	}
 
 	var isEnding:Bool = false;

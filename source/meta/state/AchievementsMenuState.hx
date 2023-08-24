@@ -51,44 +51,6 @@ class AchievementsMenuState extends MusicBeatState
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
 
-		// "GLOBAL" SCRIPTS
-		var filesPushed:Array<String> = [];
-		var foldersToCheck:Array<String> = [Paths.getPreloadPath('achievements/')];
-
-		#if MODS_ALLOWED
-		foldersToCheck.insert(0, Paths.mods('achievements/'));
-		if(Paths.currentModDirectory != null && Paths.currentModDirectory.length > 0)
-			foldersToCheck.insert(0, Paths.mods(Paths.currentModDirectory + '/achievements/'));
-
-		for(mod in Paths.getGlobalMods())
-			foldersToCheck.insert(0, Paths.mods(mod + '/achievements/'));
-		#end
-
-		for (folder in foldersToCheck)
-		{
-			if(FileSystem.exists(folder))
-			{
-				for (file in FileSystem.readDirectory(folder))
-				{
-					if(!filesPushed.contains(file))
-					{
-						if(file.endsWith('.lua'))
-						{
-							#if LUA_ALLOWED
-							luaArray.push(new FunkinLua(folder + file));
-							filesPushed.push(file);
-							#end
-						}
-						else if(file.endsWith('.hx'))
-						{
-							haxeArray.push(new FunkinHaxe(folder + file));
-							filesPushed.push(file);
-						}
-					}
-				}
-			}
-		}
-
 		Achievements.loadAchievements();
 		for (i in 0...Achievements.achievementsStuff.length) {
 			if(!Achievements.achievementsStuff[i][3] || Achievements.achievementsMap.exists(Achievements.achievementsStuff[i][2])) {

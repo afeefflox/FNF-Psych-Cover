@@ -15,6 +15,8 @@ import flixel.util.FlxColor;
 import flixel.system.FlxSound;
 import meta.state.freeplay.*;
 import objects.Alphabet;
+import util.Mods;
+import util.WeekData;
 #if MODS_ALLOWED
 import sys.FileSystem;
 #end
@@ -29,7 +31,7 @@ class MasterEditorMenu extends MusicBeatState
 		'Dialogue Editor',
 		'Dialogue Portrait Editor',
 		'Character Editor',
-		'Stage Date Editor',
+		'Note Splash Debug',
 		'Chart Editor'
 	];
 	private var grpTexts:FlxTypedGroup<Alphabet>;
@@ -38,6 +40,7 @@ class MasterEditorMenu extends MusicBeatState
 	private var curSelected = 0;
 	private var curDirectory = 0;
 	private var directoryTxt:FlxText;
+	private var funnyTxt:FlxText;
 
 	override function create()
 	{
@@ -74,21 +77,27 @@ class MasterEditorMenu extends MusicBeatState
 		directoryTxt.scrollFactor.set();
 		add(directoryTxt);
 		
-		for (folder in Paths.getModDirectories())
+		for (folder in Mods.getModDirectories())
 		{
 			directories.push(folder);
 		}
 
-		var found:Int = directories.indexOf(Paths.currentModDirectory);
+		var found:Int = directories.indexOf(Mods.currentModDirectory);
 		if(found > -1) curDirectory = found;
 		changeDirectory();
 		#end
 		changeSelection();
 
+		funnyTxt = new FlxText(0, 340, FlxG.width, '', 24);
+		funnyTxt.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		funnyTxt.scrollFactor.set();
+		add(funnyTxt);
+
 		FlxG.mouse.visible = false;
 		super.create();
 	}
 
+	var visibleTime:Float = 0;
 	override function update(elapsed:Float)
 	{
 		if (controls.UI_UP_P)
@@ -110,9 +119,28 @@ class MasterEditorMenu extends MusicBeatState
 		}
 		#end
 
+		if(visibleTime >= 0)
+		{
+			visibleTime -= elapsed;
+			if(visibleTime <= 0)
+				funnyTxt.visible = false;
+		}
+
 		if (controls.BACK)
 		{
 			MusicBeatState.switchState(new meta.state.MainMenuState());
+		}
+
+		if (controls.justPressed('debug_2'))
+		{
+			funnyTxt.text = 'You Enabled BETADCIU MODE.';
+			PlayState.isBETADCIU = !PlayState.isBETADCIU;
+			FlxG.sound.play(Paths.sound('confirmMenu'));
+			visibleTime = 3;
+			new FlxTimer().start(1.5, function(tmr:FlxTimer) {
+				visibleTime = 0.5;
+			});
+			funnyTxt.visible = true;
 		}
 
 		if (controls.ACCEPT)
@@ -130,8 +158,8 @@ class MasterEditorMenu extends MusicBeatState
 					LoadingState.loadAndSwitchState(new DialogueEditorState(), false);
 				case 'Chart Editor'://felt it would be cool maybe
 					LoadingState.loadAndSwitchState(new ChartingState(), false);
-				case 'Stage Date Editor':
-					LoadingState.loadAndSwitchState(new StageDataEditorState('stage', false));
+				case 'Note Splash Debug':
+					LoadingState.loadAndSwitchState(new NoteSplashDebugState());
 			}
 			FlxG.sound.music.volume = 0;
 			#if PRELOAD_ALL
@@ -183,13 +211,13 @@ class MasterEditorMenu extends MusicBeatState
 		if(curDirectory >= directories.length)
 			curDirectory = 0;
 	
-		util.WeekData.setDirectoryFromWeek();
+		WeekData.setDirectoryFromWeek();
 		if(directories[curDirectory] == null || directories[curDirectory].length < 1)
 			directoryTxt.text = '< No Mod Directory Loaded >';
 		else
 		{
-			Paths.currentModDirectory = directories[curDirectory];
-			directoryTxt.text = '< Loaded Mod Directory: ' + Paths.currentModDirectory + ' >';
+			Mods.currentModDirectory = directories[curDirectory];
+			directoryTxt.text = '< Loaded Mod Directory: ' + Mods.currentModDirectory + ' >';
 		}
 		directoryTxt.text = directoryTxt.text.toUpperCase();
 	}

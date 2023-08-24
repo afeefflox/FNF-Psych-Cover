@@ -1,25 +1,36 @@
 package;
 
 import Sys.sleep;
-#if desktop
 import discord_rpc.DiscordRpc;
-#end
-import meta.state.MainMenuState;
+import util.Mods;
+import lime.app.Application;
+
 #if LUA_ALLOWED
 import llua.Lua;
 import llua.State;
 #end
 
-using StringTools;
-
 class DiscordClient
 {
 	public static var isInitialized:Bool = false;
+	private static var _defaultID:String = "1014777680073347183";
+	public static var clientID(default, set):String = _defaultID;
+
+	private static var _options:Dynamic = {
+		details: "In the Menus",
+		state: null,
+		largeImageKey: 'icon',
+		largeImageText: "Psych Cover Engine",
+		smallImageKey : null,
+		startTimestamp : null,
+		endTimestamp : null
+	};
+
 	public function new()
 	{
 		trace("Discord Client starting...");
 		DiscordRpc.start({
-			clientID: "1014777680073347183",
+			clientID: clientID,
 			onReady: onReady,
 			onError: onError,
 			onDisconnected: onDisconnected
@@ -35,6 +46,31 @@ class DiscordClient
 
 		DiscordRpc.shutdown();
 	}
+
+	public static function check()
+	{
+		if(!ClientPrefs.discordRPC)
+		{
+			if(DiscordClient.isInitialized) DiscordClient.shutdown();
+			DiscordClient.isInitialized = false;
+		}
+		else DiscordClient.start();
+	}
+	
+	public static function start()
+	{
+		if (!DiscordClient.isInitialized && ClientPrefs.discordRPC) {
+			DiscordClient.initialize();
+			Application.current.window.onClose.add(function() {
+				DiscordClient.shutdown();
+			});
+		}
+	}
+
+	public static function resetID()
+	{
+		if(clientID != _defaultID) clientID = _defaultID;
+	}
 	
 	public static function shutdown()
 	{
@@ -43,12 +79,20 @@ class DiscordClient
 	
 	static function onReady()
 	{
-		DiscordRpc.presence({
-			details: "In the Menus",
-			state: null,
-			largeImageKey: 'icon',
-			largeImageText: "Psych Cover Engine"
-		});
+		DiscordRpc.presence(_options);
+	}
+
+	private static function set_clientID(newID:String)
+	{
+		clientID = newID;
+		if(isInitialized)
+		{
+			trace('test!');
+			DiscordClient.shutdown();
+			isInitialized = false;
+			start();
+		}
+		return newID;
 	}
 
 	static function onError(_code:Int, _message:String)
@@ -73,26 +117,37 @@ class DiscordClient
 
 	public static function changePresence(details:String, state:Null<String>, ?smallImageKey : String, ?hasStartTimestamp : Bool, ?endTimestamp: Float)
 	{
-		var startTimestamp:Float = if(hasStartTimestamp) Date.now().getTime() else 0;
+		var startTimestamp:Float = 0;
+		if (hasStartTimestamp) startTimestamp = Date.now().getTime();
+		if (endTimestamp > 0) endTimestamp = startTimestamp + endTimestamp;
 
-		if (endTimestamp > 0)
-		{
-			endTimestamp = startTimestamp + endTimestamp;
-		}
-
-		DiscordRpc.presence({
-			details: details,
-			state: state,
-			largeImageKey: 'icon',
-			largeImageText: "Engine Version: " + MainMenuState.psychCoverEngineVersion,
-			smallImageKey : smallImageKey,
-			// Obtained times are in milliseconds so they are divided so Discord can use it
-			startTimestamp : Std.int(startTimestamp / 1000),
-            endTimestamp : Std.int(endTimestamp / 1000)
-		});
+		_options.details = details;
+		_options.state = state;
+		_options.largeImageKey = 'icon';
+		_options.largeImageText = "Engine Version: " + meta.state.MainMenuState.psychCoverEngineVersion;
+		_options.smallImageKey = smallImageKey;
+		// Obtained times are in milliseconds so they are divided so Discord can use it
+		_options.startTimestamp = Std.int(startTimestamp / 1000);
+		_options.endTimestamp = Std.int(endTimestamp / 1000);
+		DiscordRpc.presence(_options);
 
 		//trace('Discord RPC Updated. Arguments: $details, $state, $smallImageKey, $hasStartTimestamp, $endTimestamp');
 	}
+
+	public static function resetClientID()
+		clientID = _defaultID;
+
+	#if MODS_ALLOWED
+	public static function loadModRPC()
+	{
+		var pack:Dynamic = Mods.getPack();
+		if(pack != null && pack.discordRPC != null && pack.discordRPC != clientID)
+		{
+			clientID = pack.discordRPC;
+			//trace('Changing clientID! $clientID, $_defaultID');
+		}
+	}
+	#end
 
 	#if LUA_ALLOWED
 	public static function addLuaCallbacks(lua:State) {

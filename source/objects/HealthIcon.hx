@@ -1,12 +1,16 @@
 package objects;
-
+#if (HSCRIPT_ALLOWED && SScript >= "3.0.0")
+import tea.SScript;
+#end
 import flixel.graphics.FlxGraphic;
 import flixel.FlxSprite;
 import openfl.utils.Assets as OpenFlAssets;
 import util.script.FunkinHaxe;
+import util.script.FunkinLua;
 import util.script.Globals;
 #if sys
 import sys.FileSystem;
+import sys.io.File;
 #end
 using StringTools;
 
@@ -19,23 +23,18 @@ class HealthIcon extends FlxSprite
 	private var isEmotionStuff:Bool = false;
 	private var isNormal:Bool = true;
 
-	public var initialWidth:Float = 0;
-	public var initialHeight:Float = 0;
 	public var haxeArray:Array<FunkinHaxe> = [];
-
-	public var offsetX = 0;
-	public var offsetY = 0;
 
 	private var char:String = '';
 	var isPlayer:Bool = false;
 
 
-	public function new(char:String = 'bf', isPlayer:Bool = false)
+	public function new(char:String = 'bf', isPlayer:Bool = false, ?allowGPU:Bool = true)
 	{
 		super();
 		isOldIcon = (char == char +'-old');
 		this.isPlayer = isPlayer;
-		changeIcon(char);
+		changeIcon(char, null, allowGPU);
 		scrollFactor.set();
 	}
 
@@ -55,50 +54,51 @@ class HealthIcon extends FlxSprite
 	}
 
 	private var iconOffsets:Array<Float> = [0, 0];
-	public function changeIcon(char:String, ?newPlayer:Bool = null) {
+	public function changeIcon(char:String, ?newPlayer:Bool = null, ?allowGPU:Bool = false) {
 		if (this.char != char || (newPlayer != null && newPlayer != isPlayer))
 		{
 			if (newPlayer != null)
 				isPlayer = newPlayer;
-			
-			offsetX = 0;
-			offsetY = 0;
+
 			for (lua in haxeArray) {
-				lua.call('onDestroy', []);
 				lua.call('destroy', []);
-				#if hscript
 				if(lua != null) lua = null;
-				#end
 			}
 			haxeArray = [];
 
-			var name:String = 'icons/' + char;
-			if(!Paths.fileExists('images/' + name + '.png', IMAGE)) name = 'icons/icon-' + char; //Older versions of psych engine's support
-			if(!Paths.fileExists('images/' + name + '.png', IMAGE)) name = 'icons/icon-face'; //Prevents crash from missing icon
-			loadScript(name);
+			var characterBETADCIUPath:String = 'iconsBETADCIU/icon-' + char;
+			var characterPath:String = 'icons/icon-' + char;
+
+			if(Paths.fileExists('images/' + characterBETADCIUPath + '.png', IMAGE))
+				loadIcon(characterBETADCIUPath, allowGPU);
+			else if(Paths.fileExists('images/' + characterPath + '.png', IMAGE))
+				loadIcon(characterPath, allowGPU);
+			else
+				loadIcon('icons/icon-face', allowGPU);
+
 			call('changeIcon', [char, newPlayer]);
+
 			set('icon', this);
 			set('isPlayer', isPlayer);
-			set('offsetX', offsetX);
-			set('offsetY', offsetY);
 			set('iconOffsets', iconOffsets);
-			var iconGraphic:FlxGraphic = Paths.image(name);
-			if(iconGraphic.width == 450)
-			{
-				loadGraphic(iconGraphic, true, Std.int(iconGraphic.width / 3), iconGraphic.height);
-				iconOffsets[0] = (width - 150) / 2;
-				iconOffsets[1] = (width - 150) / 2;
-				iconOffsets[2] = (width - 150) / 2;
-				updateHitbox();
-		
-				animation.add('icon', [0, 1, 2], 0, false, isPlayer);
-				animation.play('icon');
-				isWinner = true;
-				isEmotionStuff = false;
-				isNormal = false;
+
+			this.char = char;
+					
+		    antialiasing = ClientPrefs.globalAntialiasing;
+			if(char.endsWith('-pixel')) {
+				antialiasing = false;
 			}
-			else if (iconGraphic.width == 750)
-			{
+		}
+	}
+
+	function loadIcon(path:String, allowGPU:Bool = false)
+	{
+		var name:String = path;
+		loadScript(path);
+		var iconGraphic:FlxGraphic = Paths.image(path, allowGPU);
+		switch(iconGraphic.width)
+		{
+			case 750:
 				loadGraphic(iconGraphic, true, Std.int(iconGraphic.width / 5), iconGraphic.height);
 				iconOffsets[0] = (width - 150) / 2;
 				iconOffsets[1] = (width - 150) / 2;
@@ -111,9 +111,19 @@ class HealthIcon extends FlxSprite
 				isWinner = false;
 				isEmotionStuff = true;
 				isNormal = false;
-			}
-			else if (iconGraphic.width == 300)
-			{
+			case 450:
+				loadGraphic(iconGraphic, true, Std.int(iconGraphic.width / 3), iconGraphic.height);
+				iconOffsets[0] = (width - 150) / 2;
+				iconOffsets[1] = (width - 150) / 2;
+				iconOffsets[2] = (width - 150) / 2;
+				updateHitbox();
+		
+				animation.add('icon', [0, 1, 2], 0, false, isPlayer);
+				animation.play('icon');
+				isWinner = true;
+				isEmotionStuff = false;
+				isNormal = false;
+			default:
 				loadGraphic(iconGraphic, true, Std.int(iconGraphic.width / 2), iconGraphic.height);
 				iconOffsets[0] = (width - 150) / 2;
 				iconOffsets[1] = (width - 150) / 2;
@@ -124,38 +134,45 @@ class HealthIcon extends FlxSprite
 				isWinner = false;
 				isEmotionStuff = false;
 				isNormal = true;
-			}
-			animation.play('icon');
-			this.char = char;
-
-			initialWidth = width;
-			initialHeight = height;
-
-			antialiasing = ClientPrefs.globalAntialiasing;
-			if(char.endsWith('-pixel')) {
-				antialiasing = false;
-			}
 		}
+		animation.play('icon');
 	}
 
 	function loadScript(name:String) {
-		var doPush:Bool = false;
-		var hxFile:String = 'images/' + name + '.hx';
-		#if MODS_ALLOWED
-		if(FileSystem.exists(Paths.modFolders(hxFile))) {
-			hxFile = Paths.modFolders(hxFile);
-			doPush = true;
-		} else {
-			hxFile = Paths.getPreloadPath(hxFile);
-			if(FileSystem.exists(hxFile)) {
+		var scriptExts:Array<String> = ['hx', 'hxs', 'hscript', 'hxc'];
+		#if HSCRIPT_ALLOWED
+		for (ext in scriptExts)
+		{
+			#if MODS_ALLOWED
+			var doPush:Bool = false;
+			var scriptFile:String = name + '.$ext';
+			var replacePath:String = Paths.modFolders(scriptFile);
+			if(FileSystem.exists(replacePath))
+			{
+				scriptFile = replacePath;
 				doPush = true;
 			}
-		}
+			else
+			{
+				scriptFile = Paths.getPreloadPath(scriptFile);
+				if(FileSystem.exists(scriptFile))
+					doPush = true;
+			}
+			#else
+			scriptFile = Paths.getPreloadPath(scriptFile);
+			if(Assets.exists(scriptFile)) doPush = true;
+			#end
+			
+			if(doPush)
+			{
+				if(SScript.global.exists(scriptFile))
+					doPush = false;
 
-		if(doPush)
-		{
-			var haxeScript:FunkinHaxe = new FunkinHaxe(hxFile);
-			haxeArray.push(haxeScript);
+				if(doPush)
+				{
+					loadHaxe(scriptFile);
+				}
+			}
 		}
 		#end
 	}
@@ -208,20 +225,102 @@ class HealthIcon extends FlxSprite
 		return char;
 	}
 
-	public function call(event:String, args:Array<Dynamic>)
-	{
-		if (haxeArray != null)
+	public function call(funcToCall:String, args:Array<Dynamic> = null, ?ignoreStops:Bool = false, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
+		var returnVal:Dynamic = FunkinLua.Function_Continue;
+
+		#if HSCRIPT_ALLOWED
+		if(exclusions == null) exclusions = new Array();
+		if(excludeValues == null) excludeValues = new Array();
+		excludeValues.push(FunkinLua.Function_Continue);
+
+		var len:Int = haxeArray.length;
+		if (len < 1)
+			return returnVal;
+		for(i in 0...len)
 		{
-			for (i in haxeArray)
-				i.call(event, args);
+			var script:FunkinHaxe = haxeArray[i];
+			if(script == null || !script.exists(funcToCall) || exclusions.contains(script.origin))
+				continue;
+
+			var myValue:Dynamic = null;
+			try
+			{
+				var callValue = script.call(funcToCall, args);
+				if(!callValue.succeeded)
+				{
+					var e = callValue.exceptions[0];
+					if(e != null)
+						FunkinLua.luaTrace('ERROR (${script.origin}: ${callValue.calledFunction}) - ' + e.message.substr(0, e.message.indexOf('\n')), true, false, FlxColor.RED);
+				}
+				else
+				{
+					myValue = callValue.returnValue;
+					if((myValue == FunkinLua.Function_StopHScript || myValue == FunkinLua.Function_StopAll) && !excludeValues.contains(myValue) && !ignoreStops)
+					{
+						returnVal = myValue;
+						break;
+					}
+					
+					if(myValue != null && !excludeValues.contains(myValue))
+						returnVal = myValue;
+				}
+			}
 		}
+		#end
+
+		return returnVal;
 	}
 
-	public function set(variable:String, arg:Dynamic)
-	{
-		for (script in haxeArray)
-		{
+	public function set(variable:String, arg:Dynamic, exclusions:Array<String> = null) {
+		#if HSCRIPT_ALLOWED
+		if(exclusions == null) exclusions = [];
+		for (script in haxeArray) {
+			if(exclusions.contains(script.origin))
+				continue;
+
 			script.set(variable, arg);
+		}
+		#end
+	}
+
+	function loadHaxe(file:String)
+	{
+		try
+		{
+			var newScript:FunkinHaxe = new FunkinHaxe(null, file, true);
+			@:privateAccess
+			if(newScript.parsingExceptions != null && newScript.parsingExceptions.length > 0)
+			{
+				@:privateAccess
+				for (e in newScript.parsingExceptions)
+					if(e != null)
+					{
+						if(PlayState.instance != null)
+						{
+							PlayState.instance.addTextToDebug('HealthIcon ERROR ON LOADING ($file): ${e.message.substr(0, e.message.indexOf('\n'))}', FlxColor.RED);
+						}
+					}
+						
+				newScript.destroy();
+				return;
+			}
+
+			haxeArray.push(newScript);
+			trace('initialized sscript interp successfully: $file');
+		}
+		catch(e:Dynamic)
+		{
+			var newScript:FunkinHaxe = cast (SScript.global.get(file), FunkinHaxe);
+			if(PlayState.instance != null)
+			{
+				PlayState.instance.addTextToDebug('HealthIcon ERROR ($file) - ' + e.toString(), FlxColor.RED);
+			}
+			trace('HealthIcon ERROR ($file) - ' + e.toString());
+			if(newScript != null)
+			{
+				newScript.active = false;
+				haxeArray.remove(newScript);
+			}
 		}
 	}
 }

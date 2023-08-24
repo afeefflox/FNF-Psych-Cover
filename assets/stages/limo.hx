@@ -12,6 +12,7 @@ var dancersDiff:Float = 320;
 function create()
 {
 	addHaxeLibrary('Achievements', 'util');
+	addHaxeLibrary('BackgroundDancer', 'objects');
 	makeLuaGroup('grpLimoParticles');
 	makeLuaGroup('grpLimoDancers');
 
@@ -55,7 +56,8 @@ function create()
 
 		for (i in 0...5)
 		{
-			makeBGDancer((370 * i) + dancersDiff + bgLimo.x, bgLimo.y - 400);
+			var dancer:BackgroundDancer = new BackgroundDancer((370 * i) + 170, bgLimo.y - 400);
+			dancer.scrollFactor.set(0.4, 0.4);
 			addGroup('grpLimoDancers', dancer);
 		}
 
@@ -81,7 +83,7 @@ function create()
 
 	fastCar = new FlxSprite(-300, 160).loadGraphic(Paths.image('stages/limo/fastCarLol'));
 	fastCar.antialiasing = ClientPrefs.globalAntialiasing;
-	fastCar.active = true;
+	//fastCar.active = true; well it solve a lot for change stage
 	resetFastCar();
 	add(fastCar, true);
 
@@ -91,6 +93,8 @@ function create()
 	limo.animation.addByPrefix('drive', "Limo stage", 24, true);
 	limo.animation.play('drive', true);
 	add(limo, true, 'gf');
+
+	stage.setDefaultGF('gf-car');
 }
 
 
@@ -214,17 +218,16 @@ function update(elapsed:Float)
 var danceDir:Bool = false;
 function beatHit() {
 	if(!ClientPrefs.lowQuality) {
-		game.getLuaGroup('grpLimoDancers').forEach(function(dancer:FlxSprite)
+		game.getLuaGroup('grpLimoDancers').forEach(function(dancer:BackgroundDancer)
 		{
-			dancer.scrollFactor.set(0.4, 0.4);
-			danceDir = !danceDir;
-
-			if (danceDir)
-				dancer.animation.play('danceRight', true);
-			else
-				dancer.animation.play('danceLeft', true);
+			dancer.dance();
 		});
+
+		if (FlxG.random.bool(1)) //real
+			killHenchmen();
 	}
+
+
 
 	if (FlxG.random.bool(10) && fastCarCanDrive)
 		fastCarDrive();
@@ -256,23 +259,29 @@ var carTimer:FlxTimer;
 function fastCarDrive()
 {
 	//trace('Car drive');
-	FlxG.sound.play(Paths.soundRandom('carPass', 0, 1), 0.7);
-
-	fastCar.velocity.x = (FlxG.random.int(170, 220) / FlxG.elapsed) * 3;
-	fastCarCanDrive = false;
-	carTimer = new FlxTimer().start(2, function(tmr:FlxTimer)
+	if(fastCar != null)
 	{
-		resetFastCar();
-		carTimer = null;
-	});
+		FlxG.sound.play(Paths.soundRandom('carPass', 0, 1), 0.7);
+
+		fastCar.velocity.x = (FlxG.random.int(170, 220) / FlxG.elapsed) * 3;
+		fastCarCanDrive = false;
+		carTimer = new FlxTimer().start(2, function(tmr:FlxTimer)
+		{
+			resetFastCar();
+			carTimer = null;
+		});
+	}
 }
 
 function resetFastCar():Void
 {
-	fastCar.x = -12600;
-	fastCar.y = FlxG.random.int(140, 250);
-	fastCar.velocity.x = 0;
-	fastCarCanDrive = true;
+	if(fastCar != null)
+	{
+		fastCar.x = -12600;
+		fastCar.y = FlxG.random.int(140, 250);
+		fastCar.velocity.x = 0;
+		fastCarCanDrive = true;
+	}
 }
 
 
@@ -302,14 +311,4 @@ function killHenchmen():Void
 				FlxG.log.add('Deaths: ' + Achievements.henchmenDeath);
 		}
 	}
-}
-
-function makeBGDancer(x:Float, y:Float)
-{
-	dancer = new FlxSprite(x, y);
-	dancer.frames = Paths.getSparrowAtlas("stages/limo/limoDancer");
-	dancer.animation.addByIndices('danceLeft', 'bg dancer sketch PINK', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "", 24, false);
-	dancer.animation.addByIndices('danceRight', 'bg dancer sketch PINK', [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], "", 24, false);
-	dancer.animation.play('danceLeft');
-	dancer.antialiasing = ClientPrefs.globalAntialiasing;
 }

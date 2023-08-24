@@ -33,6 +33,7 @@ import objects.AttachedSprite;
 import objects.Alphabet;
 import util.CoolUtil;
 import meta.state.freeplay.*;
+import util.Mods;
 
 using StringTools;
 
@@ -69,8 +70,10 @@ class ModsMenuState extends MusicBeatState
 
 	override function create()
 	{
+		/*
 		Paths.clearStoredMemory();
 		Paths.clearUnusedMemory();
+		*/
 		WeekData.setDirectoryFromWeek();
 
 		#if desktop
@@ -100,7 +103,7 @@ class ModsMenuState extends MusicBeatState
 			{
 				if(leMods.length > 1 && leMods[0].length > 0) {
 					var modSplit:Array<String> = leMods[i].split('|');
-					if(!Paths.ignoreModFolders.contains(modSplit[0].toLowerCase()))
+					if(!Mods.ignoreModFolders.contains(modSplit[0].toLowerCase()))
 					{
 						addToModsList([modSplit[0], (modSplit[1] == '1')]);
 						//trace(modSplit[1]);
@@ -112,9 +115,9 @@ class ModsMenuState extends MusicBeatState
 		// FIND MOD FOLDERS
 		var boolshit = true;
 		if (FileSystem.exists("modsList.txt")){
-			for (folder in Paths.getModDirectories())
+			for (folder in Mods.getModDirectories())
 			{
-				if(!Paths.ignoreModFolders.contains(folder))
+				if(!Mods.ignoreModFolders.contains(folder))
 				{
 					addToModsList([folder, true]); //i like it false by default. -bb //Well, i like it True! -Shadow
 				}
@@ -398,7 +401,7 @@ class ModsMenuState extends MusicBeatState
 
 		var path:String = 'modsList.txt';
 		File.saveContent(path, fileStr);
-		Paths.pushGlobalMods();
+		Mods.pushGlobalMods();
 	}
 
 	var noModsSine:Float = 0;

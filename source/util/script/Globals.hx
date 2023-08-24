@@ -14,13 +14,20 @@ import flixel.text.FlxText.FlxTextAlign;
 import flixel.text.FlxText.FlxTextFormat;
 import Type.ValueType;
 import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween.FlxTweenType;
 import flixel.FlxSprite;
+import flixel.FlxBasic;
+import flixel.FlxObject;
 import flixel.util.FlxTimer;
 import openfl.display.BlendMode;
 import meta.state.*;
 import meta.substate.*;
 import flixel.FlxG;
 import MusicBeat;
+import flixel.util.FlxSave;
+import flixel.math.FlxMath;
+import openfl.utils.Assets;
+import objects.Stage;
 #if sys
 import sys.FileSystem;
 import sys.io.File;
@@ -28,11 +35,98 @@ import sys.io.File;
 #if (!flash && sys)
 import flixel.addons.display.FlxRuntimeShader;
 #end
+
+#if LUA_ALLOWED
+import llua.Lua;
+import llua.LuaL;
+import llua.State;
+import llua.Convert;
+#end
+
+#if hscript
+import hscript.Parser;
+import hscript.Interp;
+import hscript.Expr;
+#end
+import haxe.Exception;
+import haxe.Constraints;
+
 using StringTools;
+
+typedef LuaTweenOptions = {
+	type:FlxTweenType,
+	startDelay:Float,
+	onUpdate:Null<String>,
+	onStart:Null<String>,
+	onComplete:Null<String>,
+	loopDelay:Float,
+	ease:EaseFunction
+}
+
+
+class CallbackHandler
+{
+	#if LUA_ALLOWED
+	public static inline function call(l:State, fname:String):Int
+	{
+		try
+		{
+			//trace('calling $fname');
+			var cbf:Dynamic = Lua_helper.callbacks.get(fname);
+
+			//Local functions have the lowest priority
+			//This is to prevent a "for" loop being called in every single operation,
+			//so that it only loops on reserved/special functions
+			if(cbf == null) 
+			{
+				//trace('looping thru scripts');
+				for (script in PlayState.instance.luaArray)
+					if(script != null && script.lua == l)
+					{
+						//trace('found script');
+						cbf = script.callbacks.get(fname);
+						break;
+					}
+			}
+			
+			if(cbf == null) return 0;
+
+			var nparams:Int = Lua.gettop(l);
+			var args:Array<Dynamic> = [];
+
+			for (i in 0...nparams) {
+				args[i] = Convert.fromLua(l, i + 1);
+			}
+
+			var ret:Dynamic = null;
+			/* return the number of results */
+
+			ret = Reflect.callMethod(null,cbf,args);
+
+			if(ret != null){
+				Convert.toLua(l, ret);
+				return 1;
+			}
+		}
+		catch(e:Dynamic)
+		{
+			if(Lua_helper.sendErrorsToLua) {LuaL.error(l, 'CALLBACK ERROR! ${if(e.message != null) e.message else e}');return 0;}
+			trace(e);
+			throw(e);
+		}
+		return 0;
+	}
+	#end
+}
 
 class Globals {
 
 	public static inline function getInstance()
+	{
+		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
+	}
+
+	public static inline function getTargetInstance()
 	{
 		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
 	}
@@ -65,28 +159,80 @@ class Globals {
 		return false;
 	}
 
-	inline public static function createTypedGroup(?variable:Dynamic):Dynamic
+	public static function addCharacterLayer(obj:FlxBasic, ?front:Bool = false, ?layersName:String = 'boyfriend')
 	{
-		variable = new FlxTypedGroup<Dynamic>();
-		return variable;
+		if(front)
+		{
+			var layersCharacter:String = 'boyfriend';
+			switch(layersName.toLowerCase().trim()) 
+			{
+				case 'gf'|'girlfriend':
+					layersCharacter = 'gf';
+				case 'dad'|'opponent':
+					layersCharacter = 'dad';
+			}
+			Stage.instance.layers.get(layersCharacter).add(obj);
+		}
+		else
+		{
+			Stage.instance.add(obj);
+		}
 	}
 
-	inline public static function createTypedSpriteGroup(?variable:Dynamic):Dynamic
+	public static function removeCharacterLayer(obj:FlxBasic, ?front:Bool = false, ?layersName:String = 'boyfriend')
 	{
-		variable = new FlxTypedSpriteGroup<Dynamic>();
-		return variable;
+		if(front)
+		{
+			var layersCharacter:String = 'boyfriend';
+			switch(layersName.toLowerCase().trim()) 
+			{
+				case 'gf'|'girlfriend':
+					layersCharacter = 'gf';
+				case 'dad'|'opponent':
+					layersCharacter = 'dad';
+			}
+			Stage.instance.layers.get(layersCharacter).remove(obj);
+		}
+		else
+		{
+			Stage.instance.remove(obj);
+		}
 	}
 
-	inline public static function createSpriteGroup(?variable)
-	{
-		variable = new FlxSpriteGroup();
-		return variable;
+	public static function getProperty(variable:String, ?allowMaps:Bool = false) {
+		var split:Array<String> = variable.split('.');
+		if(split.length > 1)
+			return getVarInArray(getPropertyLoop(split, true, true, allowMaps), split[split.length-1], allowMaps);
+		return getVarInArray(getTargetInstance(), variable, allowMaps);
 	}
 
-	inline public static function createGroup(?variable)
+	public static function setProperty(variable:String, value:Dynamic, ?allowMaps:Bool = false) {
+		var split:Array<String> = variable.split('.');
+		if(split.length > 1) {
+			setVarInArray(getPropertyLoop(split, true, true, allowMaps), split[split.length-1], value, allowMaps);
+		}
+		setVarInArray(getTargetInstance(), variable, value, allowMaps);
+	}
+
+	public static inline function getLowestCharacterGroup():FlxSpriteGroup
 	{
-		variable = new FlxGroup();
-		return variable;
+		var group:FlxSpriteGroup = PlayState.instance.gfGroup;
+		var pos:Int = PlayState.instance.members.indexOf(group);
+
+		var newPos:Int = PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup);
+		if(newPos < pos)
+		{
+			group = PlayState.instance.boyfriendGroup;
+			pos = newPos;
+		}
+		
+		newPos = PlayState.instance.members.indexOf(PlayState.instance.dadGroup);
+		if(newPos < pos)
+		{
+			group = PlayState.instance.dadGroup;
+			pos = newPos;
+		}
+		return group;
 	}
 
 	//Better optimized than using some getProperty shit or idk
@@ -164,7 +310,50 @@ class Globals {
 	}
 
 
-	public static function getFlxEaseByString(?ease:String = '') {
+	public static function getLuaTween(options:Dynamic) {
+		return {
+			type: getTweenTypeByString(options.type),
+			startDelay: options.startDelay,
+			onUpdate: options.onUpdate,
+			onStart: options.onStart,
+			onComplete: options.onComplete,
+			loopDelay: options.loopDelay,
+			ease: getTweenEaseByString(options.ease)
+		};
+	}
+
+	public static function getTweenTypeByString(?type:String = '') {
+		switch(type.toLowerCase().trim())
+		{
+			case 'backward': return FlxTweenType.BACKWARD;
+			case 'looping': return FlxTweenType.LOOPING;
+			case 'persist': return FlxTweenType.PERSIST;
+			case 'pingpong': return FlxTweenType.PINGPONG;
+		}
+		return FlxTweenType.ONESHOT;
+	}
+
+	public static function oldTweenFunction(tag:String, vars:String, tweenValue:Any, duration:Float, ease:String, funcName:String)
+	{
+		#if LUA_ALLOWED
+		var target:Dynamic = tweenPrepare(tag, vars);
+		if(target != null) {
+			PlayState.instance.modchartTweens.set(tag, FlxTween.tween(target, tweenValue, duration, {ease: getTweenEaseByString(ease),
+				onComplete: function(twn:FlxTween) {
+					PlayState.instance.modchartTweens.remove(tag);
+					PlayState.instance.callOnLuas('onTweenCompleted', [tag, vars]);
+					if(Stage.instance != null)
+						Stage.instance.callOnLuas('onTweenCompleted', [tag, vars]);
+				}
+			}));
+		} else {
+			FunkinLua.luaTrace('$funcName: Couldnt find object: $vars', false, false, FlxColor.RED);
+		}
+		#end
+	}
+
+
+	public static function getTweenEaseByString(?ease:String = '') {
 		switch(ease.toLowerCase().trim()) {
 			case 'backin': return FlxEase.backIn;
 			case 'backinout': return FlxEase.backInOut;
@@ -206,55 +395,83 @@ class Globals {
 		return FlxEase.linear;
 	}
 
-	public static function setVarInArray(instance:Dynamic, variable:String, value:Dynamic):Any
+	public static function setVarInArray(instance:Dynamic, variable:String, value:Dynamic, allowMaps:Bool = false):Any
 	{
-		var shit:Array<String> = variable.split('[');
-		if(shit.length > 1)
+		var splitProps:Array<String> = variable.split('[');
+		if(splitProps.length > 1)
 		{
-			var blah:Dynamic = Reflect.getProperty(instance, shit[0]);
-			for (i in 1...shit.length)
+			var target:Dynamic = null;
+			if(PlayState.instance.variables.exists(splitProps[0]))
 			{
-				var leNum:Dynamic = shit[i].substr(0, shit[i].length - 1);
-				if(i >= shit.length-1) //Last array
-					blah[leNum] = value;
-				else //Anything else
-					blah = blah[leNum];
+				var retVal:Dynamic = PlayState.instance.variables.get(splitProps[0]);
+				if(retVal != null)
+					target = retVal;
 			}
-			return blah;
+			else target = Reflect.getProperty(instance, splitProps[0]);
+
+			for (i in 1...splitProps.length)
+			{
+				var j:Dynamic = splitProps[i].substr(0, splitProps[i].length - 1);
+				if(i >= splitProps.length-1) //Last array
+					target[j] = value;
+				else //Anything else
+					target = target[j];
+			}
+			return target;
 		}
-		/*if(Std.isOfType(instance, Map))
-			instance.set(variable,value);
-		else*/
-		switch(Type.typeof(instance)){
-			case ValueType.TClass(haxe.ds.StringMap) | ValueType.TClass(haxe.ds.ObjectMap) | ValueType.TClass(haxe.ds.IntMap) | ValueType.TClass(haxe.ds.EnumValueMap):
-				instance.set(variable, value);
-			default:
-				Reflect.setProperty(instance, variable, value);
-		};
 
+		if(allowMaps && isMap(instance))
+		{
+			//trace(instance);
+			instance.set(variable, value);
+			return value;
+		}
 
-		return true;
+		if(PlayState.instance.variables.exists(variable))
+		{
+			PlayState.instance.variables.set(variable, value);
+			return value;
+		}
+		Reflect.setProperty(instance, variable, value);
+		return value;
 	}
 
-    public static function getVarInArray(instance:Dynamic, variable:String):Any
+	public static function getVarInArray(instance:Dynamic, variable:String, allowMaps:Bool = false):Any
 	{
-		var shit:Array<String> = variable.split('[');
-		if(shit.length > 1)
+		var splitProps:Array<String> = variable.split('[');
+		if(splitProps.length > 1)
 		{
-			var blah:Dynamic = Reflect.getProperty(instance, shit[0]);
-			for (i in 1...shit.length)
+			var target:Dynamic = null;
+			if(PlayState.instance.variables.exists(splitProps[0]))
 			{
-				var leNum:Dynamic = shit[i].substr(0, shit[i].length - 1);
-				blah = blah[leNum];
+				var retVal:Dynamic = PlayState.instance.variables.get(splitProps[0]);
+				if(retVal != null)
+					target = retVal;
 			}
-			return blah;
+			else
+				target = Reflect.getProperty(instance, splitProps[0]);
+
+			for (i in 1...splitProps.length)
+			{
+				var j:Dynamic = splitProps[i].substr(0, splitProps[i].length - 1);
+				target = target[j];
+			}
+			return target;
 		}
-		switch(Type.typeof(instance)){
-			case ValueType.TClass(haxe.ds.StringMap) | ValueType.TClass(haxe.ds.ObjectMap) | ValueType.TClass(haxe.ds.IntMap) | ValueType.TClass(haxe.ds.EnumValueMap):
-				return instance.get(variable);
-			default:
-				return Reflect.getProperty(instance, variable);
-		};
+		
+		if(allowMaps && isMap(instance))
+		{
+			//trace(instance);
+			return instance.get(variable);
+		}
+
+		if(PlayState.instance.variables.exists(variable))
+		{
+			var retVal:Dynamic = PlayState.instance.variables.get(variable);
+			if(retVal != null)
+				return retVal;
+		}
+		return Reflect.getProperty(instance, variable);
 	}
 
     public static inline function getTextObject(name:String):FlxText
@@ -262,26 +479,33 @@ class Globals {
 		return PlayState.instance.modchartTexts.exists(name) ? PlayState.instance.modchartTexts.get(name) : Reflect.getProperty(PlayState.instance, name);
 	}
 
-    public static function getGroupStuff(leArray:Dynamic, variable:String) {
-		var killMe:Array<String> = variable.split('.');
-		if(killMe.length > 1) {
-			var coverMeInPiss:Dynamic = Reflect.getProperty(leArray, killMe[0]);
-			for (i in 1...killMe.length-1) {
-				coverMeInPiss = Reflect.getProperty(coverMeInPiss, killMe[i]);
-			}
-			switch(Type.typeof(coverMeInPiss)){
-				case ValueType.TClass(haxe.ds.StringMap) | ValueType.TClass(haxe.ds.ObjectMap) | ValueType.TClass(haxe.ds.IntMap) | ValueType.TClass(haxe.ds.EnumValueMap):
-					return coverMeInPiss.get(killMe[killMe.length-1]);
-				default:
-					return Reflect.getProperty(coverMeInPiss, killMe[killMe.length-1]);
-			};
+	public static function setGroupStuff(leArray:Dynamic, variable:String, value:Dynamic, ?allowMaps:Bool = false) {
+		var split:Array<String> = variable.split('.');
+		if(split.length > 1) {
+			var obj:Dynamic = Reflect.getProperty(leArray, split[0]);
+			for (i in 1...split.length-1)
+				obj = Reflect.getProperty(obj, split[i]);
+
+			leArray = obj;
+			variable = split[split.length-1];
 		}
-		switch(Type.typeof(leArray)){
-			case ValueType.TClass(haxe.ds.StringMap) | ValueType.TClass(haxe.ds.ObjectMap) | ValueType.TClass(haxe.ds.IntMap) | ValueType.TClass(haxe.ds.EnumValueMap):
-				return leArray.get(variable);
-			default:
-				return Reflect.getProperty(leArray, variable);
-		};
+		if(allowMaps && isMap(leArray)) leArray.set(variable, value);
+		else Reflect.setProperty(leArray, variable, value);
+		return value;
+	}
+	public static function getGroupStuff(leArray:Dynamic, variable:String, ?allowMaps:Bool = false) {
+		var split:Array<String> = variable.split('.');
+		if(split.length > 1) {
+			var obj:Dynamic = Reflect.getProperty(leArray, split[0]);
+			for (i in 1...split.length-1)
+				obj = Reflect.getProperty(obj, split[i]);
+
+			leArray = obj;
+			variable = split[split.length-1];
+		}
+
+		if(allowMaps && isMap(leArray)) return leArray.get(variable);
+		return Reflect.getProperty(leArray, variable);
 	}
 
     public static function loadFrames(spr:FlxSprite, image:String, spriteType:String, ?library:String)
@@ -302,30 +526,47 @@ class Globals {
 		}
 	}
 
-	public static function setGroupStuff(leArray:Dynamic, variable:String, value:Dynamic) {
-		var killMe:Array<String> = variable.split('.');
-		if(killMe.length > 1) {
-			var coverMeInPiss:Dynamic = Reflect.getProperty(leArray, killMe[0]);
-			for (i in 1...killMe.length-1) {
-				coverMeInPiss = Reflect.getProperty(coverMeInPiss, killMe[i]);
-			}
-			Reflect.setProperty(coverMeInPiss, killMe[killMe.length-1], value);
-			return;
-		}
-		Reflect.setProperty(leArray, variable, value);
+	public static function isMap(variable:Dynamic)
+	{
+		if(variable.exists != null && variable.keyValueIterator != null) return true;
+		return false;
 	}
 
+	public static function callMethodFromObject(classObj:Dynamic, funcStr:String, args:Array<Dynamic> = null)
+	{
+		if(args == null) args = [];
+
+		var split:Array<String> = funcStr.split('.');
+		var funcToRun:Function = null;
+		var obj:Dynamic = classObj;
+		//trace('start: $obj');
+		if(obj == null)
+		{
+			return null;
+		}
+
+		for (i in 0...split.length)
+		{
+			obj = getVarInArray(obj, split[i].trim());
+			//trace(obj, split[i]);
+		}
+
+		funcToRun = cast obj;
+		//trace('end: $obj');
+		return funcToRun != null ? Reflect.callMethod(obj, funcToRun, args) : null;
+	}
+
+
+	//MODCHART
 	public static function resetTextTag(tag:String) {
 		if(!PlayState.instance.modchartTexts.exists(tag)) {
 			return;
 		}
 
-		var pee:ModchartText = PlayState.instance.modchartTexts.get(tag);
-		pee.kill();
-		if(pee.wasAdded) {
-			PlayState.instance.remove(pee, true);
-		}
-		pee.destroy();
+		var target:FlxText = PlayState.instance.modchartTexts.get(tag);
+		target.kill();
+		PlayState.instance.remove(target, true);
+		target.destroy();
 		PlayState.instance.modchartTexts.remove(tag);
 	}
 
@@ -334,12 +575,10 @@ class Globals {
 			return;
 		}
 
-		var pee:ModchartSprite = PlayState.instance.modchartSprites.get(tag);
-		pee.kill();
-		if(pee.wasAdded) {
-			PlayState.instance.remove(pee, true);
-		}
-		pee.destroy();
+		var target:ModchartSprite = PlayState.instance.modchartSprites.get(tag);
+		target.kill();
+		PlayState.instance.remove(target, true);
+		target.destroy();
 		PlayState.instance.modchartSprites.remove(tag);
 	}
 
@@ -352,16 +591,14 @@ class Globals {
 	}
 
 	public static function resetGroupTag(tag:String) {
-		if(!PlayState.instance.modchartGroups.exists(tag)) {
+		if(!PlayState.instance.modchartSprites.exists(tag)) {
 			return;
 		}
 
-		var pee:ModchartGroup = PlayState.instance.modchartGroups.get(tag);
-		pee.kill();
-		if(pee.wasAdded) {
-			PlayState.instance.remove(pee, true);
-		}
-		pee.destroy();
+		var target:ModchartGroup = PlayState.instance.modchartGroups.get(tag);
+		target.kill();
+		PlayState.instance.remove(target, true);
+		target.destroy();
 		PlayState.instance.modchartGroups.remove(tag);
 	}
 
@@ -370,12 +607,10 @@ class Globals {
 			return;
 		}
 
-		var pee:ModchartGroupTyped = PlayState.instance.modchartGroupTypes.get(tag);
-		pee.kill();
-		if(pee.wasAdded) {
-			PlayState.instance.remove(pee, true);
-		}
-		pee.destroy();
+		var target:ModchartGroupTyped = PlayState.instance.modchartGroupTypes.get(tag);
+		target.kill();
+		PlayState.instance.remove(target, true);
+		target.destroy();
 		PlayState.instance.modchartGroupTypes.remove(tag);
 	}
 
@@ -384,12 +619,10 @@ class Globals {
 			return;
 		}
 
-		var pee:ModchartCharacter = PlayState.instance.modchartCharacters.get(tag);
-		pee.kill();
-		if(pee.wasAdded) {
-			PlayState.instance.remove(pee, true);
-		}
-		pee.destroy();
+		var target:ModchartCharacter = PlayState.instance.modchartCharacters.get(tag);
+		target.kill();
+		PlayState.instance.remove(target, true);
+		target.destroy();
 		PlayState.instance.modchartCharacters.remove(tag);
 	}
 
@@ -398,12 +631,10 @@ class Globals {
 			return;
 		}
 
-		var pee:ModchartHealthIcon = PlayState.instance.modchartHealthIcons.get(tag);
-		pee.kill();
-		if(pee.wasAdded) {
-			PlayState.instance.remove(pee, true);
-		}
-		pee.destroy();
+		var target:ModchartHealthIcon = PlayState.instance.modchartHealthIcons.get(tag);
+		target.kill();
+		PlayState.instance.remove(target, true);
+		target.destroy();
 		PlayState.instance.modchartHealthIcons.remove(tag);
 	}
 
@@ -416,37 +647,38 @@ class Globals {
 		}
 	}
 
-	public static function tweenShit(tag:String, vars:String) {
+	public static function tweenPrepare(tag:String, vars:String) {
 		cancelTween(tag);
 		var variables:Array<String> = vars.split('.');
 		var sexyProp:Dynamic = getObjectDirectly(variables[0]);
-		if(variables.length > 1) {
-			sexyProp = getVarInArray(getPropertyLoopThingWhatever(variables), variables[variables.length-1]);
-		}
+		if(variables.length > 1) sexyProp = getVarInArray(getPropertyLoop(variables), variables[variables.length-1]);
 		return sexyProp;
 	}
 
 	
-    public static function getObjectDirectly(objectName:String, ?checkForTextsToo:Bool = true):Dynamic
+	public static function getObjectDirectly(objectName:String, ?checkForTextsToo:Bool = true, ?allowMaps:Bool = false):Dynamic
 	{
-		var coverMeInPiss:Dynamic = PlayState.instance.getLuaObject(objectName, checkForTextsToo);
-		if(coverMeInPiss==null)
-			coverMeInPiss = getVarInArray(getInstance(), objectName);
-
-		return coverMeInPiss;
+		switch(objectName)
+		{
+			case 'this' | 'instance' | 'game':
+				return PlayState.instance;
+			
+			default:
+				var obj:Dynamic = PlayState.instance.getLuaObject(objectName, checkForTextsToo);
+				if(obj == null) obj = getVarInArray(getTargetInstance(), objectName, allowMaps);
+				return obj;
+		}
 	}
 
 	
-    public static function getPropertyLoopThingWhatever(killMe:Array<String>, ?checkForTextsToo:Bool = true, ?getProperty:Bool=true):Dynamic
+	public static function getPropertyLoop(split:Array<String>, ?checkForTextsToo:Bool = true, ?getProperty:Bool=true, ?allowMaps:Bool = false):Dynamic
 	{
-		var coverMeInPiss:Dynamic = getObjectDirectly(killMe[0], checkForTextsToo);
-		var end = killMe.length;
-		if(getProperty)end=killMe.length-1;
+		var obj:Dynamic = getObjectDirectly(split[0], checkForTextsToo);
+		var end = split.length;
+		if(getProperty) end = split.length-1;
 
-		for (i in 1...end) {
-			coverMeInPiss = getVarInArray(coverMeInPiss, killMe[i]);
-		}
-		return coverMeInPiss;
+		for (i in 1...end) obj = getVarInArray(obj, split[i], allowMaps);
+		return obj;
 	}
 
 
@@ -463,18 +695,17 @@ class Globals {
 	#if (!flash && sys)
 	public static function getShader(obj:String):FlxRuntimeShader
 	{
-		var killMe:Array<String> = obj.split('.');
-		var leObj:FlxSprite = getObjectDirectly(killMe[0]);
-		if(killMe.length > 1) {
-			leObj = getVarInArray(getPropertyLoopThingWhatever(killMe), killMe[killMe.length-1]);
-		}
+		var split:Array<String> = obj.split('.');
+		var target:FlxSprite = null;
+		if(split.length > 1) target = getVarInArray(getPropertyLoop(split), split[split.length-1]);
+		else target = getObjectDirectly(split[0]);
 
-		if(leObj != null) {
-			var shader:Dynamic = leObj.shader;
-			var shader:FlxRuntimeShader = shader;
-			return shader;
+		if(target == null)
+		{
+			FunkinLua.luaTrace('Error on getting shader: Object $obj not found', false, false, FlxColor.RED);
+			return null;
 		}
-		return null;
+		return cast (target.shader, FlxRuntimeShader);
 	}
 	#end
 }
@@ -508,12 +739,10 @@ class ModchartText extends FlxText
 
 class DebugLuaText extends FlxText
 {
-	private var disableTime:Float = 6;
-	public var parentGroup:FlxTypedGroup<DebugLuaText>;
-	public function new(text:String, parentGroup:FlxTypedGroup<DebugLuaText>, color:FlxColor) {
-		this.parentGroup = parentGroup;
-		super(10, 10, 0, text, 16);
-		setFormat(Paths.font("vcr.ttf"), 16, color, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+	public var disableTime:Float = 6;
+	public function new() {
+		super(10, 10, 0, '', 16);
+		setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scrollFactor.set();
 		borderSize = 1;
 	}
@@ -523,6 +752,7 @@ class DebugLuaText extends FlxText
 		disableTime -= elapsed;
 		if(disableTime < 0) disableTime = 0;
 		if(disableTime < 1) alpha = disableTime;
+		if(alpha == 0 || y >= FlxG.height) kill();
 	}
 }
 
@@ -531,13 +761,69 @@ class CustomSubstate extends MusicBeatSubstate
 	public static var name:String = 'unnamed';
 	public static var instance:CustomSubstate;
 
+	public static function implement(funk:FunkinLua)
+	{
+		#if LUA_ALLOWED
+		var lua = funk.lua;
+		Lua_helper.add_callback(lua, "openCustomSubstate", openCustomSubstate);
+		Lua_helper.add_callback(lua, "closeCustomSubstate", closeCustomSubstate);
+		Lua_helper.add_callback(lua, "insertToCustomSubstate", insertToCustomSubstate);
+		#end
+	}
+	
+	public static function openCustomSubstate(name:String, ?pauseGame:Bool = false)
+	{
+		if(pauseGame)
+		{
+			FlxG.camera.followLerp = 0;
+			PlayState.instance.persistentUpdate = false;
+			PlayState.instance.persistentDraw = true;
+			PlayState.instance.paused = true;
+			if(FlxG.sound.music != null) {
+				FlxG.sound.music.pause();
+				PlayState.instance.vocals.pause();
+			}
+		}
+		PlayState.instance.openSubState(new CustomSubstate(name));
+		PlayState.instance.setOnHaxes('customSubstate', instance);
+		PlayState.instance.setOnHaxes('customSubstateName', name);
+	}
+
+	public static function closeCustomSubstate()
+	{
+		if(instance != null)
+		{
+			PlayState.instance.closeSubState();
+			instance = null;
+			return true;
+		}
+		return false;
+	}
+
+	public static function insertToCustomSubstate(tag:String, ?pos:Int = -1)
+	{
+		if(instance != null)
+		{
+			var tagObject:FlxObject = cast (PlayState.instance.variables.get(tag), FlxObject);
+			if(tagObject == null) tagObject = cast (PlayState.instance.modchartSprites.get(tag), FlxObject);
+
+			if(tagObject != null)
+			{
+				if(pos < 0) instance.add(tagObject);
+				else instance.insert(pos, tagObject);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	override function create()
 	{
 		instance = this;
 
-		PlayState.instance.callOnLuas('onCustomSubstateCreate', [name]);
+		PlayState.instance.callOnScripts('onCustomSubstateCreate', [name]);
 		super.create();
-		PlayState.instance.callOnLuas('onCustomSubstateCreatePost', [name]);
+		PlayState.instance.callOnScripts('onCustomSubstateCreatePost', [name]);
 	}
 	
 	public function new(name:String)
@@ -549,14 +835,18 @@ class CustomSubstate extends MusicBeatSubstate
 	
 	override function update(elapsed:Float)
 	{
-		PlayState.instance.callOnLuas('onCustomSubstateUpdate', [name, elapsed]);
+		PlayState.instance.callOnScripts('onCustomSubstateUpdate', [name, elapsed]);
 		super.update(elapsed);
-		PlayState.instance.callOnLuas('onCustomSubstateUpdatePost', [name, elapsed]);
+		PlayState.instance.callOnScripts('onCustomSubstateUpdatePost', [name, elapsed]);
 	}
 
 	override function destroy()
 	{
-		PlayState.instance.callOnLuas('onCustomSubstateDestroy', [name]);
+		PlayState.instance.callOnScripts('onCustomSubstateDestroy', [name]);
+		name = 'unnamed';
+
+		PlayState.instance.setOnHaxes('customSubstate', null);
+		PlayState.instance.setOnHaxes('customSubstateName', name);
 		super.destroy();
 	}
 }
@@ -577,8 +867,8 @@ class ModchartGroupTyped extends FlxTypedGroup<Dynamic>
 	{
 		super(maxSize);
 	}
-
 }
+
 class ModchartGroup extends FlxSpriteGroup
 {
 	public var wasAdded:Bool = false;

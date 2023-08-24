@@ -1,8 +1,10 @@
-var bgGirls:FlxSprite;
+
 var bgTrees:FlxSprite;
 var treeLeaves:FlxSprite;
 function create()
 {
+
+    addHaxeLibrary('BackgroundGirls', 'objects');
 	var bgSky:FlxSprite = new FlxSprite().loadGraphic(Paths.image('stages/school/weebSky'));
 	bgSky.scrollFactor.set(0.1, 0.1);
 	bgSky.antialiasing = false;
@@ -47,16 +49,13 @@ function create()
         treeLeaves.updateHitbox();
         add(treeLeaves);
 
-        bgGirls = new FlxSprite(-100, 190);
-	    bgGirls.frames = Paths.getSparrowAtlas('stages/school/bgFreaks');
-        swapDanceType();
-        bgGirls.animation.play('danceLeft');
+        var bgGirls:BackgroundGirls = new BackgroundGirls(-100, 190);
         bgGirls.scrollFactor.set(0.9, 0.9);
-        bgGirls.setGraphicSize(Std.int(bgGirls.width * 6));
-        bgGirls.updateHitbox();
-        bgGirls.antialiasing = false;
         add(bgGirls);
+        setVar('bgGirls', bgGirls);
     }
+
+    
 
     bgSky.setGraphicSize(widShit);
     bgSchool.setGraphicSize(widShit);
@@ -67,6 +66,64 @@ function create()
     bgSchool.updateHitbox();
     bgStreet.updateHitbox();
     bgTrees.updateHitbox();
+
+
+    stage.setDefaultGF('gf-pixel');
+
+    if(isStoryMode && !seenCutscene)
+    {
+        if(songName == 'roses') FlxG.sound.play(Paths.sound('ANGRY'));
+        initDoof();
+        stage.setStartCallback(schoolIntro);
+    }
+}
+
+var doof:DialogueBox = null;
+function initDoof()
+{
+    var file:String = Paths.txt(songName + '/' + songName + 'Dialogue'); //Checks for vanilla/Senpai dialogue
+    #if MODS_ALLOWED
+    if (!FileSystem.exists(file))
+    #else
+    if (!OpenFlAssets.exists(file))
+    #end
+    {
+        stage.startCountdown();
+        return;
+    }
+
+    doof = new DialogueBox(false, CoolUtil.coolTextFile(file));
+    doof.cameras = [camHUD];
+    doof.scrollFactor.set();
+    doof.finishThing = stage.startCountdown;
+    doof.nextDialogueThing = game.startNextDialogue;
+    doof.skipDialogueThing = game.skipDialogue;
+}
+
+function schoolIntro():Void
+{
+	inCutscene = true;
+	var black:FlxSprite = new FlxSprite(-100, -100).makeGraphic(FlxG.width * 2, FlxG.height * 2, FlxColor.BLACK);
+	black.scrollFactor.set();
+	if(songName == 'senpai') add(black);
+
+	new FlxTimer().start(0.3, function(tmr:FlxTimer)
+	{
+		black.alpha -= 0.15;
+
+		if (black.alpha > 0)
+			tmr.reset(0.3);
+		else
+		{
+			if (doof != null)
+				add(doof);
+			else
+				stage.startCountdown();
+
+			remove(black);
+			black.destroy();
+		}
+	});
 }
 
 function event(eventName:String, value1:String, value2:String)
@@ -74,45 +131,11 @@ function event(eventName:String, value1:String, value2:String)
     switch(eventName)
     {
         case 'BG Freaks Expression':
-            if(bgGirls != null) 
-                swapDanceType();
+            if(getVar('bgGirls') != null) getVar('bgGirls').swapDanceType();
     }
 }
 
 function beatHit() 
 {
-    dance();
-}
-
-function setGraphicSize()
-{
-
-}
-
-var danceDir:Bool = false;
-function dance()
-{
-	danceDir = !danceDir;
-
-	if (bgGirls != null)
-	{
-		if (danceDir)
-			bgGirls.animation.play('danceRight', true);
-		else
-			bgGirls.animation.play('danceLeft', true);
-	}
-}
-
-var isPissed:Bool = true;
-function swapDanceType()
-{
-    isPissed = !isPissed;
-    if(!isPissed) { //Gets unpissed
-        bgGirls.animation.addByIndices('danceLeft', 'BG girls group', CoolUtil.numberArray(14), "", 24, false);
-        bgGirls.animation.addByIndices('danceRight', 'BG girls group', CoolUtil.numberArray(30, 15), "", 24, false);
-    } else { //Pisses
-        bgGirls.animation.addByIndices('danceLeft', 'BG fangirls dissuaded', CoolUtil.numberArray(14), "", 24, false);
-        bgGirls.animation.addByIndices('danceRight', 'BG fangirls dissuaded', CoolUtil.numberArray(30, 15), "", 24, false);
-    }
-    dance();
+    getVar('bgGirls').dance();
 }

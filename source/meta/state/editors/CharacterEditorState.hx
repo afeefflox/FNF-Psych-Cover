@@ -40,6 +40,7 @@ import util.CoolUtil;
 import objects.BGSprite;
 import objects.Strumline;
 import objects.FakeNote;
+import util.Mods;
 #if MODS_ALLOWED
 import sys.FileSystem;
 #end
@@ -155,7 +156,7 @@ class CharacterEditorState extends MusicBeatState
 		add(healthBarBG);
 		healthBarBG.cameras = [camHUD];
 
-		leHealthIcon = new HealthIcon(char.healthIcon, false);
+		leHealthIcon = new HealthIcon(char.healthIcon, false, false);
 		leHealthIcon.y = FlxG.height - 150;
 		add(leHealthIcon);
 		leHealthIcon.cameras = [camHUD];
@@ -423,8 +424,8 @@ class CharacterEditorState extends MusicBeatState
 				0
 			],
 			"healthicon": "face",
-			"arrowSkin": "NOTE_assets",
-			"arrowStyle": "normal",
+			"arrowSkin": "noteSkins/NOTE_assets",
+			"arrowStyle": "base",
 			"splashSkin": "noteSplashes",
 			"flip_x": false,
 			"healthbar_colors": [
@@ -442,7 +443,8 @@ class CharacterEditorState extends MusicBeatState
 			],
 			"sing_duration": 4,
 			"scale": 1,
-			"isPlayerChar": false
+			"isPlayerChar": false,
+			"disabledRGB": false
 		}';
 
 	var charDropDown:FlxUIDropDownMenuCustom;
@@ -988,6 +990,8 @@ class CharacterEditorState extends MusicBeatState
 	var splashSkinInputText:FlxUIInputText;
 	var arrowStyleDropDown:FlxUIDropDownMenuCustom;
 	var arrowShowCheckBox:FlxUICheckBox;
+
+	var rgbDisabledCheckBox:FlxUICheckBox;
 	function addArrowsUI()
 	{
 		var tab_group = new FlxUI(null, UI_box);
@@ -1027,6 +1031,12 @@ class CharacterEditorState extends MusicBeatState
 		if (FlxG.save.data.showArrow == null) FlxG.save.data.showArrow = false;
 		arrowShowCheckBox.checked = FlxG.save.data.showArrow;
 
+		rgbDisabledCheckBox = new FlxUICheckBox(arrowShowCheckBox.x + 110, arrowShowCheckBox.y, null, null, "Disabled RGB Note?", 100,
+		function() {
+			char.disabledRGB = rgbDisabledCheckBox.checked;
+		});
+		rgbDisabledCheckBox.checked = char.disabledRGB;
+
 		tab_group.add(new FlxText(15, arrowSkinInputText.y - 18, 0, 'Image file Arrow Skin:'));
 		tab_group.add(new FlxText(15, arrowStyleDropDown.y - 18, 0, 'Arrow Style:'));
 		tab_group.add(new FlxText(15, splashSkinInputText.y - 18, 0, 'Image file Splash Skin:'));
@@ -1034,6 +1044,7 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.add(arrowSkinInputText);
 		tab_group.add(splashSkinInputText);
 		tab_group.add(arrowShowCheckBox);
+		tab_group.add(rgbDisabledCheckBox);
 		tab_group.add(reloadNoteSkin);
 		UI_characterbox.addGroup(tab_group);		
 	}
@@ -1042,7 +1053,7 @@ class CharacterEditorState extends MusicBeatState
 	override function getEvent(id:String, sender:Dynamic, data:Dynamic, ?params:Array<Dynamic>) {
 		if(id == FlxUIInputText.CHANGE_EVENT && (sender is FlxUIInputText)) {
 			if(sender == healthIconInputText) {
-				leHealthIcon.changeIcon(healthIconInputText.text);
+				leHealthIcon.changeIcon(healthIconInputText.text, false);
 				char.healthIcon = healthIconInputText.text;
 				updatePresence();
 			}
@@ -1062,8 +1073,10 @@ class CharacterEditorState extends MusicBeatState
 				char.jsonScale = sender.value;
 				char.setGraphicSize(Std.int(char.width * char.jsonScale));
 				char.updateHitbox();
+				
 				ghostChar.setGraphicSize(Std.int(ghostChar.width * char.jsonScale));
 				ghostChar.updateHitbox();
+				
 				reloadGhost();
 				updatePointerPos();
 
@@ -1316,6 +1329,13 @@ class CharacterEditorState extends MusicBeatState
 		else
 			char.setPosition(char.positionArray[0] + OFFSET_X + 100, char.positionArray[1]);
 
+		for (anim => offset in char.animOffsets) {
+			var leAnim:AnimArray = findAnimationByName(anim);
+			if(leAnim != null && char.isPlayer) {
+				leAnim.offsets_player = [offset[0], offset[1]];
+			}
+		}
+
 		if(blahBlahBlah) {
 			genBoyOffsets();
 		}
@@ -1389,8 +1409,9 @@ class CharacterEditorState extends MusicBeatState
 			flipXCheckBox.checked = char.originalFlipX;
 			noAntialiasingCheckBox.checked = char.noAntialiasing;
 			psychPlayerCheckBox.checked = char.wasPlayer;
+			rgbDisabledCheckBox.checked = char.disabledRGB;
 			resetHealthBarColor();
-			leHealthIcon.changeIcon(healthIconInputText.text);
+			leHealthIcon.changeIcon(healthIconInputText.text, false);
 			if(char.isPlayer)
 			{
 				positionXStepper.value = char.playerPositionArray[0];
@@ -1503,9 +1524,20 @@ class CharacterEditorState extends MusicBeatState
 
 		#if MODS_ALLOWED
 		characterList = [];
-		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Paths.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
-		for(mod in Paths.getGlobalMods())
+		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Mods.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
+		for(mod in Mods.getGlobalMods())
+		{
 			directories.push(Paths.mods(mod + '/characters/'));
+			if(PlayState.isBETADCIU)
+				directories.push(Paths.mods(mod + '/charactersBETADCIU/'));
+		}
+
+		if(PlayState.isBETADCIU)
+		{
+			directories.push(Paths.mods('charactersBETADCIU/'));
+			directories.push(Paths.mods(Mods.currentModDirectory + '/charactersBETADCIU/'));
+			directories.push(Paths.getPreloadPath('charactersBETADCIU/'));
+		}
 		for (i in 0...directories.length) {
 			var directory:String = directories[i];
 			if(FileSystem.exists(directory)) {
@@ -1534,9 +1566,20 @@ class CharacterEditorState extends MusicBeatState
 
 		#if MODS_ALLOWED
 		characterList = [];
-		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Paths.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
-		for(mod in Paths.getGlobalMods())
+		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Mods.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
+		for(mod in Mods.getGlobalMods())
+		{
 			directories.push(Paths.mods(mod + '/characters/'));
+			if(PlayState.isBETADCIU)
+				directories.push(Paths.mods(mod + '/charactersBETADCIU/'));
+		}
+		if(PlayState.isBETADCIU)
+		{
+			directories.push(Paths.mods('charactersBETADCIU/'));
+			directories.push(Paths.mods(Mods.currentModDirectory + '/charactersBETADCIU/'));
+			directories.push(Paths.getPreloadPath('charactersBETADCIU/'));
+		}
+		
 		for (i in 0...directories.length) {
 			var directory:String = directories[i];
 			if(FileSystem.exists(directory)) {
@@ -1611,9 +1654,7 @@ class CharacterEditorState extends MusicBeatState
 		var blockInput:Bool = false;
 		for (inputText in blockPressWhileTypingOn) {
 			if(inputText.hasFocus) {
-				FlxG.sound.muteKeys = [];
-				FlxG.sound.volumeDownKeys = [];
-				FlxG.sound.volumeUpKeys = [];
+				ClientPrefs.toggleVolumeKeys(false);
 				blockInput = true;
 				break;
 			}
@@ -1625,9 +1666,7 @@ class CharacterEditorState extends MusicBeatState
 				var leText:Dynamic = stepper.text_field;
 				var leText:FlxUIInputText = leText;
 				if(leText.hasFocus) {
-					FlxG.sound.muteKeys = [];
-					FlxG.sound.volumeDownKeys = [];
-					FlxG.sound.volumeUpKeys = [];
+					ClientPrefs.toggleVolumeKeys(false);
 					blockInput = true;
 					break;
 				}
@@ -1655,9 +1694,7 @@ class CharacterEditorState extends MusicBeatState
 
 		boyfriend.visible = characterShowCheckBox.checked;
 		if(!blockInput) {
-			FlxG.sound.muteKeys = TitleState.muteKeys;
-			FlxG.sound.volumeDownKeys = TitleState.volumeDownKeys;
-			FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
+			ClientPrefs.toggleVolumeKeys(true);
 
 			if (FlxG.keys.justPressed.ESCAPE) {
 				if(goToPlayState) {

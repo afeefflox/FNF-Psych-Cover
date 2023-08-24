@@ -138,7 +138,11 @@ function create()
         addGroup('foregroundSprites', tank);
     }
 
-
+    if(stage.songName == 'stress')
+        stage.setDefaultGF('pico-speaker');
+    else
+        stage.setDefaultGF('gf-tankmen');
+    
 }
 
 function createPost()

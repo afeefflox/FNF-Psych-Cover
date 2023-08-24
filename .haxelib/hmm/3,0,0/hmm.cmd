@@ -1,1 +1,0 @@
-@haxelib --global run hmm %*

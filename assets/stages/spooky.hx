@@ -16,6 +16,15 @@ function create() {
     halloweenWhite.alpha = 0;
     setBlendMode(halloweenWhite, 'add');
 	add(halloweenWhite, true);
+
+	//PRECACHE SOUNDS
+	stage.precacheSound('thunder_1');
+	stage.precacheSound('thunder_2');
+	
+	if (isStoryMode && !seenCutscene && songName == 'monster')
+	{
+		stage.setStartCallback(monsterCutscene);
+	}
 }
 
 function makeBGSprite(target:FlxSprite, image:Array<String>, scrollFactor:Array<Float>)
@@ -77,4 +86,36 @@ function lightningStrikeShit():Void
 		FlxTween.tween(halloweenWhite, {alpha: 0.5}, 0.075);
 		FlxTween.tween(halloweenWhite, {alpha: 0}, 0.25, {startDelay: 0.15});
 	}
+}
+
+
+function monsterCutscene()
+{
+	inCutscene = true;
+	camHUD.visible = false;
+
+	FlxG.camera.focusOn(new FlxPoint(dad.getMidpoint().x + 150, dad.getMidpoint().y - 100));
+
+	// character anims
+	FlxG.sound.play(Paths.soundRandom('thunder_', 1, 2));
+	if(gf != null) gf.playAnim('scared', true);
+	boyfriend.playAnim('scared', true);
+
+	// white flash
+	var whiteScreen:FlxSprite = new FlxSprite().makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.WHITE);
+	whiteScreen.scrollFactor.set();
+	whiteScreen.blend = ADD;
+	add(whiteScreen);
+	FlxTween.tween(whiteScreen, {alpha: 0}, 1, {
+		startDelay: 0.1,
+		ease: FlxEase.linear,
+		onComplete: function(twn:FlxTween)
+		{
+			remove(whiteScreen);
+			whiteScreen.destroy();
+
+			camHUD.visible = true;
+			stage.startCountdown();
+		}
+	});
 }

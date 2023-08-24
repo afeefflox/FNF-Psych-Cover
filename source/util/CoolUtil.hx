@@ -13,6 +13,8 @@ import flixel.graphics.frames.FlxAtlasFrames;
 import animateatlas.AtlasFrameMaker;
 import objects.Character;
 import flixel.util.FlxSave;
+import flixel.util.FlxColor;
+import flixel.math.FlxMath;
 #if sys
 import sys.io.File;
 import sys.FileSystem;
@@ -24,15 +26,12 @@ using StringTools;
 
 class CoolUtil
 {
-	public static var defaultDifficulties:Array<String> = [
-		'Easy',
-		'Normal',
-		'Hard'
-	];
-	public static var defaultDifficulty:String = 'Normal'; //The chart that has no suffix and starting difficulty on Freeplay/Story Mode
 
-	public static var difficulties:Array<String> = [];
+	inline public static function capitalize(text:String) {
+		return text.charAt(0).toUpperCase() + text.substr(1).toLowerCase();
+	}
 
+	
 	inline public static function quantize(f:Float, snap:Float){
 		// changed so this actually works lol
 		var m:Float = Math.fround(f * snap);
@@ -40,29 +39,9 @@ class CoolUtil
 		return (m / snap);
 	}
 	
-	public static function getDifficultyFilePath(num:Null<Int> = null)
-	{
-		if(num == null) num = PlayState.storyDifficulty;
-
-		var fileSuffix:String = difficulties[num];
-		if(fileSuffix != defaultDifficulty)
-		{
-			fileSuffix = '-' + fileSuffix;
-		}
-		else
-		{
-			fileSuffix = '';
-		}
-		return Paths.formatToSongPath(fileSuffix);
-	}
-
-	public static function difficultyString():String
-	{
-		return difficulties[PlayState.storyDifficulty].toUpperCase();
-	}
-
+	//100 iq moment :/
 	inline public static function boundTo(value:Float, min:Float, max:Float):Float {
-		return Math.max(min, Math.min(max, value));
+		return FlxMath.bound(value, min, max);
 	}
 
 	public static function coolTextFile(path:String):Array<String>
@@ -93,29 +72,41 @@ class CoolUtil
 
 		return daList;
 	}
+
+	inline public static function colorFromString(color:String):FlxColor
+	{
+		var hideChars = ~/[\t\n\r]/;
+		var color:String = hideChars.split(color).join('').trim();
+		if(color.startsWith('0x')) color = color.substring(color.length - 6);
+
+		var colorNum:Null<FlxColor> = FlxColor.fromString(color);
+		if(colorNum == null) colorNum = FlxColor.fromString('#$color');
+		return colorNum != null ? colorNum : FlxColor.WHITE;
+	}
+	
 	public static function dominantColor(sprite:flixel.FlxSprite):Int{
 		var countByColor:Map<Int, Int> = [];
 		for(col in 0...sprite.frameWidth){
 			for(row in 0...sprite.frameHeight){
 			  var colorOfThisPixel:Int = sprite.pixels.getPixel32(col, row);
-			  if(colorOfThisPixel != 0){
-				  if(countByColor.exists(colorOfThisPixel)){
-				    countByColor[colorOfThisPixel] =  countByColor[colorOfThisPixel] + 1;
-				  }else if(countByColor[colorOfThisPixel] != 13520687 - (2*13520687)){
-					 countByColor[colorOfThisPixel] = 1;
-				  }
-			  }
+				if(colorOfThisPixel != 0) {
+					if(countByColor.exists(colorOfThisPixel))
+						countByColor[colorOfThisPixel] = countByColor[colorOfThisPixel] + 1;
+					else if(countByColor[colorOfThisPixel] != 13520687 - (2*13520687))
+						countByColor[colorOfThisPixel] = 1;
+				}
 			}
 		 }
 		var maxCount = 0;
-		var maxKey:Int = 0;//after the loop this will store the max color
-		countByColor[flixel.util.FlxColor.BLACK] = 0;
-			for(key in countByColor.keys()){
-			if(countByColor[key] >= maxCount){
+		var maxKey:Int = 0; //after the loop this will store the max color
+		countByColor[FlxColor.BLACK] = 0;
+		for(key in countByColor.keys()) {
+			if(countByColor[key] >= maxCount) {
 				maxCount = countByColor[key];
 				maxKey = key;
 			}
 		}
+		countByColor = [];
 		return maxKey;
 	}
 
@@ -147,33 +138,6 @@ class CoolUtil
 	}
 
 	public static function loadFrames(key:String, ?library:String = null, SkipAtlasCheck:Bool = false):FlxFramesCollection {
-		/*
-		if (Paths.fileExists('images/$key/1.png', IMAGE, false, library)) {
-			var graphic = FlxG.bitmap.add("flixel/images/logo/default.png", false, "flixel/images/logo/default.png");
-			var frames = FlxAtlasFrames.findFrame(graphic);
-			if (frames != null)
-				return frames;
-
-			var spritesheets = [];
-			var i = 1;
-			var finalFrames = new FlxFramesCollection(graphic, ATLAS);
-
-			while (Paths.fileExists('images/$key/$i.png',IMAGE, false, library))
-			{
-				spritesheets.push(loadFrames('$key/$i', library));
-				i++;
-			}
-
-			for(frames in spritesheets)
-				if (frames != null && frames.frames != null)
-					for(f in frames.frames)
-						if (f != null) {
-							finalFrames.frames.push(f);
-							f.parent = frames.parent;
-						}
-			return finalFrames;
-		}
-		*/
 		if (!SkipAtlasCheck && Paths.fileExists('images/$key/Animation.json', TEXT, false, library)
 			&& Paths.fileExists('images/$key/spritemap.json', TEXT, false, library)
 		    && Paths.fileExists('images/$key/spritemap.png', IMAGE, false, library))
@@ -224,7 +188,7 @@ class CoolUtil
 		return if (directory != null) directory else [];
 	}
 
-	public static function getSavePath(folder:String = 'ShadowMario'):String {
+	public static function getSavePath(folder:String = 'psychcool'):String {
 		@:privateAccess
 		return #if (flixel < "5.0.0") folder #else FlxG.stage.application.meta.get('company')
 			+ '/'

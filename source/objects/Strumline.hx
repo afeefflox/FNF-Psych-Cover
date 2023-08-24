@@ -387,7 +387,7 @@ class Strumline extends FlxTypedGroup<FlxBasic>
 	public var debugMode:Bool = false;
 	public var character:Character;
 	public var keyAmount:Int = 0;
-	public var alpha:Float = 1;
+	public var Arrowalpha:Float = 1;
 	var babyArrow:StaticNote = null;
 
     public function new(x:Float = 0, y:Float = 0, ?player:Int = 0, ?character:Character, arrowSkin:String, arrowStyle:String, ?autoplay:Bool = true, ?keyAmount:Int = 4, ?visibleArrow:Bool = false, ?alpha:Float = 1)
@@ -402,7 +402,7 @@ class Strumline extends FlxTypedGroup<FlxBasic>
         this.autoplay = autoplay;
 		this.character = character;
 		this.keyAmount = keyAmount;
-		this.alpha = alpha;
+		this.Arrowalpha = alpha;
         for (i in 0...keyAmount)
         {
             babyArrow = new StaticNote(x, y, i, arrowSkin, arrowStyle);
@@ -414,7 +414,7 @@ class Strumline extends FlxTypedGroup<FlxBasic>
 			babyArrow.x += 50;
 			babyArrow.x += ((FlxG.width / 2) * player);
 			babyArrow.visible = visibleArrow;
-			babyArrow.alpha = alpha;
+			babyArrow.alpha = Arrowalpha;
 			ID = i;
         }
 

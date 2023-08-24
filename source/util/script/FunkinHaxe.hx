@@ -24,31 +24,44 @@ import flixel.util.FlxColor;
 import flixel.FlxBasic;
 import flixel.FlxSprite;
 import flixel.text.FlxText;
-import hscriptBase.Expr.Error;
 using StringTools;
+import tea.SScript;
 
 typedef FlxGroupDynamic = FlxTypedGroup<Dynamic>;
 typedef FlxTypedSpriteDynamicGroup = FlxTypedSpriteGroup<Dynamic>; 
 
+#if HSCRIPT_ALLOWED
 class FunkinHaxe extends SScript
 {
+	
+
     public var isStage:Bool = false;
 	public var scriptName:String;
-	var expr:Expr;
-	public function new(scriptName:String, ?isStage:Bool = false, ?preset:Bool = true)
+	public var origin:String;
+	public var parentLua:FunkinLua;
+	public function new(?parent:FunkinLua, ?scriptName:String, ?isStage:Bool = false)
 	{
+		if (scriptName == null)
+			scriptName = '';
+		
 		//interp.errorHandler = _errorHandler;
-		super(scriptName, preset);
+		super(scriptName, false, false);
 		this.scriptName = scriptName;
 		this.isStage = isStage;
-		traces = false;
-		trace('haxe file loaded succesfully:' + scriptName);
+		parentLua = parent;
 
-		parser.allowTypes = true;
+		if (parent != null)
+			origin = parent.scriptName;
+		if (scriptFile != null && scriptFile.length > 0)
+			origin = scriptFile;
+		preset();
+		execute();
 	}
 	
-	override public function preset()
+	override function preset()
 	{
+		super.preset();
+
         set("Std", Std);
         set("Math", Math);
         set("StringTools", StringTools);
@@ -100,6 +113,18 @@ class FunkinHaxe extends SScript
             set("game", PlayState.instance);
         }
 
+		set('parentLua', parentLua);
+		set('buildTarget', FunkinLua.getBuildTarget());
+		set('customSubstate', CustomSubstate.instance);
+		set('customSubstateName', CustomSubstate.name);
+		set('this', this);
+
+		set('Function_Stop', FunkinLua.Function_Stop);
+		set('Function_Continue', FunkinLua.Function_Continue);
+		set('Function_StopLua', FunkinLua.Function_StopLua); //doesnt do much cuz HScript has a lower priority than Lua
+		set('Function_StopHScript', FunkinLua.Function_StopHScript);
+		set('Function_StopAll', FunkinLua.Function_StopAll);
+
 		set('setVar', function(name:String, value:Dynamic)
 		{
 			PlayState.instance.variables.set(name, value);
@@ -132,24 +157,39 @@ class FunkinHaxe extends SScript
 				set(libName, Type.resolveClass(str + libName));
 			}
 			catch (e:Dynamic) {
-                trace(e);
+				var msg:String = e.message.substr(0, e.message.indexOf('\n'));
+				if(parentLua != null)
+				{
+					FunkinLua.lastCalledScript = parentLua;
+					msg = origin + ":" + parentLua.lastCalledFunction + " - " + msg;
+				}
+				else msg = '$origin - $msg';
+				FunkinLua.luaTrace(msg, parentLua == null, false, FlxColor.RED);
 			}
 			#end
 		});
 
-        set("import", function(libName:String, ?libPackage:String = '') {
-			#if hscript
-			try {
-				var str:String = '';
-				if(libPackage.length > 0)
-					str = libPackage + '.';
+		set('debugPrint', function(text:String, ?color:FlxColor = null) {
+			if(color == null) color = FlxColor.WHITE;
+			PlayState.instance.addTextToDebug(text, color);
+		});
 
-				set(libName, Type.resolveClass(str + libName));
-			}
-			catch (e:Dynamic) {
-				trace(e);
-			}
+		set('createGlobalCallback', function(name:String, func:Dynamic)
+		{
+			#if LUA_ALLOWED
+			for (script in PlayState.instance.luaArray)
+				if(script != null && script.lua != null && !script.closed)
+					Lua_helper.add_callback(script.lua, name, func);
 			#end
+			FunkinLua.customFunctions.set(name, func);
+		});
+
+		set('createCallback', function(name:String, func:Dynamic, ?funk:FunkinLua = null)
+		{
+			if(funk == null) funk = parentLua;
+			
+			if(parentLua != null) funk.addLocalCallback(name, func);
+			else FunkinLua.luaTrace('createCallback ($name): 3rd argument is null', false, false, FlxColor.RED);
 		});
 		
         set("makeLuaCharacter", function(tag:String, char:String, ?isPlayer:Bool = false, x:Float, y:Float) {
@@ -159,8 +199,7 @@ class FunkinHaxe extends SScript
 			var leGroup:ModchartGroup = new ModchartGroup(x, y);
 			var leCharacter:ModchartCharacter = new ModchartCharacter(x, y, char, isPlayer);
 			PlayState.instance.startCharacterPos(leCharacter, !isPlayer);
-			PlayState.instance.startCharacterLua(leCharacter.curCharacter);
-			PlayState.instance.startCharacterHaxe(leCharacter.curCharacter);
+			PlayState.instance.startCharacterScripts(leCharacter.curCharacter);
             PlayState.instance.modchartCharacters.set(tag, leCharacter);
 			PlayState.instance.modchartGroups.set(tag + 'Group', leGroup);
         });
@@ -169,54 +208,22 @@ class FunkinHaxe extends SScript
 			if(PlayState.instance.modchartCharacters.exists(tag) && PlayState.instance.modchartGroups.exists(tag + 'Group')) {
 				var shit:ModchartCharacter = PlayState.instance.modchartCharacters.get(tag);
 				var shitGroup:ModchartGroup = PlayState.instance.modchartGroups.get(tag + 'Group');
-				if(!shitGroup.wasAdded && !shit.wasAdded) {
-					if(isStage)
-					{
-						if(front)
-						{
-							var layersCharacter:String = 'boyfriend';
-							switch(layersName)
-							{
-								case 'gf'|'girlfriend':
-									layersCharacter = 'gf';
-								case 'dad'|'opponent':
-									layersCharacter = 'dad';
-							}
-							Stage.instance.layers.get(layersCharacter).add(shitGroup);
-						}
-						else
-						{
-							Stage.instance.add(shitGroup);
-						}
-							
-					}
+				if(isStage)
+					Globals.addCharacterLayer(shit, front, layersName);
+				else
+				{
+					if(front)
+						Globals.getTargetInstance().add(shit);
 					else
 					{
-						if(front)
-						{
-							PlayState.instance.add(shitGroup);
-						}
-	
-						if(PlayState.instance.isDead)
-						{
-							GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), shitGroup);
-						}
+						if(!PlayState.instance.isDead)
+							PlayState.instance.insert(PlayState.instance.members.indexOf(Globals.getLowestCharacterGroup()), shit);
 						else
-						{
-							var position:Int = PlayState.instance.members.indexOf(PlayState.instance.gfGroup);
-							if(PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup) < position) {
-								position = PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup);
-							} else if(PlayState.instance.members.indexOf(PlayState.instance.dadGroup) < position) {
-								position = PlayState.instance.members.indexOf(PlayState.instance.dadGroup);
-							}
-							PlayState.instance.insert(position, shitGroup);
-						}
+							GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), shit);
 					}
-					shit.wasAdded = true;
-					shitGroup.wasAdded = true;
-					shitGroup.add(shit);
-					//trace('added a thing: ' + tag);
 				}
+
+				shitGroup.add(shit);
 			}
         });
 
@@ -264,51 +271,19 @@ class FunkinHaxe extends SScript
 		set("addLuaGroup", function(tag:String, front:Bool = false, ?layersName:String = 'boyfriend') {
 			if(PlayState.instance.modchartGroupTypes.exists(tag)) {
 				var shit:ModchartGroupTyped = PlayState.instance.modchartGroupTypes.get(tag);
-				if(!shit.wasAdded) {
-					if(isStage)
-					{
-						if(front)
-						{
-							var layersCharacter:String = 'boyfriend';
-							switch(layersName)
-							{
-								case 'gf'|'girlfriend':
-									layersCharacter = 'gf';
-								case 'dad'|'opponent':
-									layersCharacter = 'dad';
-							}
-							Stage.instance.layers.get(layersCharacter).add(shit);
-						}
-						else
-						{
-							Stage.instance.add(shit);
-						}
-							
-					}
+				if(isStage)
+					Globals.addCharacterLayer(shit, front, layersName);
+				else
+				{
+					if(front)
+						Globals.getTargetInstance().add(shit);
 					else
 					{
-						if(front)
-						{
-							getInstance().add(shit);
-						}
-	
-						if(PlayState.instance.isDead)
-						{
-							GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), shit);
-						}
+						if(!PlayState.instance.isDead)
+							PlayState.instance.insert(PlayState.instance.members.indexOf(Globals.getLowestCharacterGroup()), shit);
 						else
-						{
-							var position:Int = PlayState.instance.members.indexOf(PlayState.instance.gfGroup);
-							if(PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup) < position) {
-								position = PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup);
-							} else if(PlayState.instance.members.indexOf(PlayState.instance.dadGroup) < position) {
-								position = PlayState.instance.members.indexOf(PlayState.instance.dadGroup);
-							}
-							PlayState.instance.insert(position, shit);
-						}
+							GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), shit);
 					}
-					shit.wasAdded = true;
-					//trace('added a thing: ' + tag);
 				}
 			}
 		});
@@ -316,189 +291,211 @@ class FunkinHaxe extends SScript
 		set("addLuaSpriteGroup", function(tag:String, front:Bool = false, ?layersName:String = 'boyfriend') {
 			if(PlayState.instance.modchartGroups.exists(tag)) {
 				var shit:ModchartGroup = PlayState.instance.modchartGroups.get(tag);
-				if(!shit.wasAdded) {
-					if(isStage)
-					{
-						if(front)
-						{
-							var layersCharacter:String = 'boyfriend';
-							switch(layersName)
-							{
-								case 'gf'|'girlfriend':
-									layersCharacter = 'gf';
-								case 'dad'|'opponent':
-									layersCharacter = 'dad';
-							}
-							Stage.instance.layers.get(layersCharacter).add(shit);
-						}
-						else
-						{
-							Stage.instance.add(shit);
-						}
-							
-					}
+				if(isStage)
+					Globals.addCharacterLayer(shit, front, layersName);
+				else
+				{
+					if(front)
+						Globals.getTargetInstance().add(shit);
 					else
 					{
-						if(front)
-						{
-							getInstance().add(shit);
-						}
-	
-						if(PlayState.instance.isDead)
-						{
-							GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), shit);
-						}
+						if(!PlayState.instance.isDead)
+							PlayState.instance.insert(PlayState.instance.members.indexOf(Globals.getLowestCharacterGroup()), shit);
 						else
-						{
-							var position:Int = PlayState.instance.members.indexOf(PlayState.instance.gfGroup);
-							if(PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup) < position) {
-								position = PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup);
-							} else if(PlayState.instance.members.indexOf(PlayState.instance.dadGroup) < position) {
-								position = PlayState.instance.members.indexOf(PlayState.instance.dadGroup);
-							}
-							PlayState.instance.insert(position, shit);
-						}
+							GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), shit);
 					}
-					shit.wasAdded = true;
-					//trace('added a thing: ' + tag);
 				}
 			}
 		});
 		
         set("add", function(obj:FlxBasic, ?front:Bool = false, ?layersName:String = 'boyfriend') {
-
-            if(isStage) {
-                if(front)
-                {
-                    var layersCharacter:String = 'boyfriend';
-                    switch(layersName)
-                    {
-                        case 'gf'|'girlfriend':
-                            layersCharacter = 'gf';
-                        case 'dad'|'opponent':
-                            layersCharacter = 'dad';
-                    }
-                    Stage.instance.layers.get(layersCharacter).add(obj);
-                }
-                else
-                {
-                    Stage.instance.add(obj);
-                }
-            }
-            else
-            {
-                if(front)
-                {
-                    PlayState.instance.add(obj);
-                }
-                else
-                {
-                    if(PlayState.instance.isDead)
-					{
-						GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), obj);
-					}
+			if(isStage)
+				Globals.addCharacterLayer(obj, front, layersName);
+			else
+			{
+				if(front)
+					Globals.getTargetInstance().add(obj);
+				else
+				{
+					if(!PlayState.instance.isDead)
+						PlayState.instance.insert(PlayState.instance.members.indexOf(Globals.getLowestCharacterGroup()), obj);
 					else
-					{
-						var position:Int = PlayState.instance.members.indexOf(PlayState.instance.gfGroup);
-						if(PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup) < position) {
-							position = PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup);
-						} else if(PlayState.instance.members.indexOf(PlayState.instance.dadGroup) < position) {
-							position = PlayState.instance.members.indexOf(PlayState.instance.dadGroup);
-						}
-						PlayState.instance.insert(position, obj);
-					}
-                }
-            }
+						GameOverSubstate.instance.insert(GameOverSubstate.instance.members.indexOf(GameOverSubstate.instance.boyfriend), obj);
+				}
+			}
         });
 
 		set("remove", function(obj:FlxBasic, ?front:Bool = false, ?layersName:String = 'boyfriend') {
-            if(isStage) {
-                if(front)
-                {
-                    var layersCharacter:String = 'boyfriend';
-                    switch(layersName)
-                    {
-                        case 'gf'|'girlfriend':
-                            layersCharacter = 'gf';
-                        case 'dad'|'opponent':
-                            layersCharacter = 'dad';
-                    }
-                    Stage.instance.layers.get(layersCharacter).remove(obj);
-                }
-                else
-                {
-                    Stage.instance.remove(obj);
-                }
-            }
-            else
-            {
-                if(front)
-                {
-                    PlayState.instance.remove(obj);
-                }
-                else
-                {
-                    if(PlayState.instance.isDead)
-					{
-						GameOverSubstate.instance.remove(obj);
-					}
-					else
-					{
-						PlayState.instance.remove(obj);
-					}
-                }
-            }
-        });
-		
-        set("setBlendMode", function(obj:FlxSprite, blend:String = '') {
-            if(obj != null) {
-				obj.blend = blendModeFromString(blend);
-				return true;
+			if(isStage)
+				Globals.removeCharacterLayer(obj, front, layersName);
+			else
+			{
+				if(!PlayState.instance.isDead)
+					PlayState.instance.remove(obj);
+				else
+					GameOverSubstate.instance.remove(obj);
 			}
-            return false;
         });
 
-        set("setFormat", function(text:FlxText, font:String, size:Int = 8, color:String = 'white', ?alignment:String, ?borderStyle:String, borderColor:String = 'transparent', EmbeddedFont:Bool = true) {
-            if(text != null) {
-                text.setFormat(Paths.font(font), size, getFlxColorByString(color), getFlxTextAlignByString(alignment), getFlxTextBorderStyleByString(borderStyle), getFlxColorByString(borderColor));
-				return true;
-			}
-            return false;
-        });
+		set('addBehindGF', function(obj:FlxBasic) PlayState.instance.addBehindGF(obj));
+		set('addBehindDad', function(obj:FlxBasic) PlayState.instance.addBehindDad(obj));
+		set('addBehindBF', function(obj:FlxBasic) PlayState.instance.addBehindBF(obj));
+		set('insert', function(pos:Int, obj:FlxBasic) PlayState.instance.insert(pos, obj));
+	}
+	
+	override public function destroy()
+	{
+		origin = null;
+		parentLua = null;
+
+		super.destroy();
+	}
+}
+#end
+
+//If hscript were working
+class HScript
+{
+	public static var parser:Parser = new Parser();
+	public var interp:Interp;
+	public var variables(get, never):Map<String, Dynamic>;
+	public var parentLua:FunkinLua;
+	public function get_variables()
+	{
+		return interp.variables;
 	}
 
-	public static function callThisScripts(moduleArray:Array<FunkinHaxe>, luaFile:String):Array<FunkinHaxe>
+	public static function initHaxeModuleCode(parent:FunkinLua)
 	{
-		#if MODS_ALLOWED
-		var luaToLoad:String = Paths.modFolders(luaFile + '.hx');
-		if(sys.FileSystem.exists(luaToLoad))
+		if(parent.hscript == null)
 		{
-			moduleArray.push(new FunkinHaxe(luaToLoad));
+			trace('initializing haxe interp for: ${parent.scriptName}');
+			parent.hscript = new HScript(parent);
 		}
-		else
-		{
-			luaToLoad = Paths.getPreloadPath(luaFile + '.hx');
-			if(sys.FileSystem.exists(luaToLoad))
-			{
-				moduleArray.push(new FunkinHaxe(luaToLoad));
-			}
-		}
-		#elseif sys
-		var luaToLoad:String = Paths.getPreloadPath(luaFile + '.hx');
-		if(OpenFlAssets.exists(luaToLoad))
-		{
-			moduleArray.push(new FunkinHaxe(luaToLoad));
-		}
+	}
+
+	public function new(?parent:FunkinLua)
+	{
+		interp = new Interp();
+		interp.variables.set('FlxG', FlxG);
+		interp.variables.set('FlxSprite', FlxSprite);
+		interp.variables.set('FlxCamera', FlxCamera);
+		interp.variables.set('FlxTimer', FlxTimer);
+		interp.variables.set('FlxTween', FlxTween);
+		interp.variables.set('FlxEase', FlxEase);
+		interp.variables.set('PlayState', PlayState);
+		interp.variables.set('game', PlayState.instance);
+		interp.variables.set('Paths', Paths);
+		interp.variables.set('Conductor', Conductor);
+		interp.variables.set('ClientPrefs', ClientPrefs);
+		interp.variables.set('Character', Character);
+		interp.variables.set('FlxColor', util.FlxColorHelper);
+		interp.variables.set('Alphabet', Alphabet);
+		interp.variables.set('CustomSubstate', CustomSubstate);
+		#if (!flash && sys)
+		interp.variables.set('FlxRuntimeShader', flixel.addons.display.FlxRuntimeShader);
 		#end
+		interp.variables.set('ShaderFilter', openfl.filters.ShaderFilter);
+		interp.variables.set('StringTools', StringTools);
+		interp.variables.set('parentLua', parentLua);
+		interp.variables.set('buildTarget', FunkinLua.getBuildTarget());
 
-		if (moduleArray != null)
+		interp.variables.set('setVar', function(name:String, value:Dynamic)
 		{
-			for (i in moduleArray)
-			{
-				i.call('create', []);
-			}
-		}
+			PlayState.instance.variables.set(name, value);
+		});
 
-		return moduleArray;
+		interp.variables.set('getVar', function(name:String)
+		{
+			var result:Dynamic = null;
+			if(PlayState.instance.variables.exists(name)) result = PlayState.instance.variables.get(name);
+			return result;
+		});
+		interp.variables.set('removeVar', function(name:String)
+		{
+			if(PlayState.instance.variables.exists(name))
+			{
+				PlayState.instance.variables.remove(name);
+				return true;
+			}
+			return false;
+		});
+
+		interp.variables.set('debugPrint', function(text:String, ?color:FlxColor = null) {
+			if(color == null) color = FlxColor.WHITE;
+			PlayState.instance.addTextToDebug(text, color);
+		});
+
+		interp.variables.set('createGlobalCallback', function(name:String, func:Dynamic)
+		{
+			#if LUA_ALLOWED
+			for (script in PlayState.instance.luaArray)
+				if(script != null && script.lua != null && !script.closed)
+					Lua_helper.add_callback(script.lua, name, func);
+			#end
+			FunkinLua.customFunctions.set(name, func);
+		});
+
+		interp.variables.set('createGlobalCallback', function(name:String, func:Dynamic)
+		{
+			#if LUA_ALLOWED
+			for (script in PlayState.instance.luaArray)
+				if(script != null && script.lua != null && !script.closed)
+					Lua_helper.add_callback(script.lua, name, func);
+			#end
+			FunkinLua.customFunctions.set(name, func);
+		});
+
+		interp.variables.set('createCallback', function(name:String, func:Dynamic, ?funk:FunkinLua = null)
+		{
+			if(funk == null) funk = parentLua;
+			if(parentLua != null) funk.addLocalCallback(name, func);
+			else FunkinLua.luaTrace('createCallback ($name): 3rd argument is null', false, false, FlxColor.RED);
+		});
+	}
+
+	public function execute(codeToRun:String):Dynamic
+	{
+		@:privateAccess
+		HScript.parser.line = 1;
+		HScript.parser.allowTypes = true;
+		return interp.execute(HScript.parser.parseString(codeToRun));
+	}
+
+	public static function implement(funk:FunkinLua)
+	{
+		funk.addLocalCallback("runHaxeCode", function(codeToRun:String) {
+			var retVal:Dynamic = null;
+
+			#if hscript
+			initHaxeModuleCode(funk);
+			try {
+				retVal = funk.hscript.execute(codeToRun);
+			}
+			catch (e:Dynamic) {
+				FunkinLua.luaTrace(funk.scriptName + ":" + funk.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
+			}
+			#else
+			FunkinLua.luaTrace("runHaxeCode: HScript isn't supported on this platform!", false, false, FlxColor.RED);
+			#end
+
+			if(retVal != null && !isOfTypes(retVal, [Bool, Int, Float, String, Array])) retVal = null;
+			if(retVal == null) Lua.pushnil(funk.lua);
+			return retVal;
+		});
+
+		funk.addLocalCallback("addHaxeLibrary", function(libName:String, ?libPackage:String = '') {
+			initHaxeModuleCode(funk);
+			try {
+				var str:String = '';
+				if(libPackage.length > 0)
+					str = libPackage + '.';
+
+				funk.hscript.variables.set(libName, Type.resolveClass(str + libName));
+			}
+			catch (e:Dynamic) {
+				FunkinLua.luaTrace(funk.scriptName + ":" + funk.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
+			}
+		});
 	}
 }

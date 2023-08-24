@@ -58,6 +58,12 @@ function create() {
 	santa.animation.addByPrefix('idle', 'santa idle in fear', 24, false);
 	santa.antialiasing = ClientPrefs.globalAntialiasing;
 	add(santa);
+
+	stage.precacheSound('stages/mall/Lights_Shut_off');
+	stage.setDefaultGF('gf-christmas');
+
+	if(isStoryMode && !seenCutscene)
+		stage.setEndCallback(eggnogEndCutscene);
 }
 
 function event(eventName:String, value1:String, value2:String)
@@ -99,4 +105,33 @@ function dance()
 
 	if (santa != null)
 		santa.animation.play('idle', true);
+}
+
+function eggnogEndCutscene()
+{
+	if(PlayState.storyPlaylist[1] == null)
+	{
+		stage.endSong();
+		return;
+	}
+
+	var nextSong:String = Paths.formatToSongPath(PlayState.storyPlaylist[1]);
+	if(nextSong == 'winter-horrorland')
+	{
+		FlxG.sound.play(Paths.sound('stages/mall/Lights_Shut_off'));
+
+		var blackShit:FlxSprite = new FlxSprite(-FlxG.width * FlxG.camera.zoom,
+			-FlxG.height * FlxG.camera.zoom).makeGraphic(FlxG.width * 3, FlxG.height * 3, FlxColor.BLACK);
+		blackShit.scrollFactor.set();
+		add(blackShit);
+		camHUD.visible = false;
+
+		inCutscene = true;
+		canPause = false;
+
+		new FlxTimer().start(1.5, function(tmr:FlxTimer) {
+			stage.endSong();
+		});
+	}
+	else stage.endSong();
 }

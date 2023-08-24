@@ -25,12 +25,13 @@ import flixel.input.keyboard.FlxKey;
 import meta.state.*;
 import meta.state.freeplay.*;
 import util.CoolUtil;
+import util.Mods;
 using StringTools;
 
 class MainMenuState extends MusicBeatState
 {
-	public static var psychEngineVersion:String = '0.6.3'; //This is also used for Discord RPC
-	public static var psychCoverEngineVersion:String = '0.6'; //This is also used for Discord RPC
+	public static var psychEngineVersion:String = '0.6.3 & 0.7.1h cool'; //This is also used for Discord RPC
+	public static var psychCoverEngineVersion:String = '0.6.1'; //This is also used for Discord RPC
 	public static var curSelected:Int = 0;
 
 	var menuItems:FlxTypedGroup<FlxSprite>;
@@ -50,20 +51,18 @@ class MainMenuState extends MusicBeatState
 	var magenta:FlxSprite;
 	var camFollow:FlxObject;
 	var camFollowPos:FlxObject;
-	var debugKeys:Array<FlxKey>;
 
 	override function create()
 	{
 		#if MODS_ALLOWED
-		Paths.pushGlobalMods();
+		Mods.pushGlobalMods();
 		#end
-		WeekData.loadTheFirstEnabledMod();
+		Mods.loadTheFirstEnabledMod();
 
 		#if desktop
 		// Updating Discord Rich Presence
 		DiscordClient.changePresence("In the Menus", null);
 		#end
-		debugKeys = ClientPrefs.copyKey(ClientPrefs.keyBinds.get('debug_1'));
 
 		camGame = new FlxCamera();
 		camAchievement = new FlxCamera();
@@ -242,7 +241,7 @@ class MainMenuState extends MusicBeatState
 			}
 		}
 
-		var lerpVal:Float = CoolUtil.boundTo(elapsed * 7.5, 0, 1);
+		var lerpVal:Float = CoolUtil.boundTo(elapsed * 9 / (FlxG.updateFramerate / 60), 0, 1);
 		camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 
 		if (!selectedSomethin)
@@ -317,6 +316,12 @@ class MainMenuState extends MusicBeatState
 										MusicBeatState.switchState(new CreditsState());
 									case 'options':
 										LoadingState.loadAndSwitchState(new meta.state.options.OptionsState());
+										meta.state.options.OptionsState.onPlayState = false;
+										if (PlayState.SONG != null)
+										{
+											PlayState.SONG.arrowSkin = null;
+											PlayState.SONG.splashSkin = null;
+										}
 								}
 							});
 						}
@@ -324,7 +329,7 @@ class MainMenuState extends MusicBeatState
 				}
 			}
 			#if desktop
-			else if (FlxG.keys.anyJustPressed(debugKeys))
+			else if (controls.justPressed('debug_1'))
 			{
 				selectedSomethin = true;
 				MusicBeatState.switchState(new MasterEditorMenu());

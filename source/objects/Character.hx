@@ -20,6 +20,9 @@ import openfl.utils.AssetType;
 import openfl.utils.Assets;
 import haxe.Json;
 import haxe.format.JsonParser;
+import objects.NoteSplash;
+import objects.Note;
+import tjson.TJSON;
 
 using StringTools;
 
@@ -29,20 +32,21 @@ typedef CharacterFile = {
 	var scale:Float;
 	var sing_duration:Float;
 	var healthicon:String;
-	var arrowSkin:String;
-	var arrowStyle:String;
-	var splashSkin:String;
+	@:optional var arrowSkin:String;
+	@:optional var arrowStyle:String;
+	@:optional var splashSkin:String;
 
 	var position:Array<Float>;
 	var camera_position:Array<Float>;
 
-	var player_position:Array<Float>;
-	var playerCamera_position:Array<Float>;
+	@:optional var player_position:Array<Float>;
+	@:optional var playerCamera_position:Array<Float>;
 
 	var flip_x:Bool;
 	var no_antialiasing:Bool;
 	var healthbar_colors:Array<Int>;
-	var isPlayerChar:Bool;
+	@:optional var isPlayerChar:Bool;
+	@:optional var disableRGBNote:Bool;
 }
 
 typedef AnimArray = {
@@ -64,6 +68,7 @@ class Character extends FNFSprite
 	public var isPlayer(default, set):Bool = false;
 	public var wasPlayer(default, set):Bool = false;
 	public var curCharacter:String = DEFAULT_CHARACTER;
+	public var disabledRGB(default, set):Bool = false;
 
 	public var colorTween:FlxTween;
 	public var holdTimer:Float = 0;
@@ -96,6 +101,10 @@ class Character extends FNFSprite
 	public var originalFlipX(default, set):Bool = false;
 	public var healthColorArray:Array<Int> = [255, 0, 0];
 	public var startedDeath:Bool = false;
+	function set_disabledRGB(value:Bool):Bool
+	{
+		return disabledRGB = value;
+	}
 	function set_isPlayer(value:Bool):Bool
 	{
 		return isPlayer = value;
@@ -132,125 +141,12 @@ class Character extends FNFSprite
 				var characterBETADCIUPath:String = 'charactersBETADCIU/' + curCharacter + '.json';
 				var characterPath:String = 'characters/' + curCharacter + '.json';
 
-				#if MODS_ALLOWED
-				var path:String = Paths.modFolders(characterPath);
-				if (!FileSystem.exists(path)) {
-					path = Paths.getPreloadPath(characterPath);
-				}
-
-				if (!FileSystem.exists(path))
-				#else
-				var path:String = Paths.getPreloadPath(characterPath);
-				if (!Assets.exists(path))
-				#end
-				{
-					path = Paths.getPreloadPath('characters/' + DEFAULT_CHARACTER + '.json'); //If a character couldn't be found, change him to BF just to prevent a crash
-				}
-
-				#if MODS_ALLOWED
-				var rawJson = File.getContent(path);
-				#else
-				var rawJson = Assets.getText(path);
-				#end
-
-				var json:CharacterFile = cast Json.parse(rawJson);
-				loadFrames(json.image);
-				imageFile = json.image;
-
-				if(json.scale != 1) {
-					jsonScale = json.scale;
-					setGraphicSize(Std.int(width * jsonScale));
-					updateHitbox();
-				}
-
-				positionArray = json.position;
-				cameraPosition = json.camera_position;
-
-				if (json.player_position != null)
-					playerPositionArray = json.player_position;
+				if(Paths.fileExists(characterBETADCIUPath, TEXT))
+					loadCharacterJson(characterBETADCIUPath);
+				else if(Paths.fileExists(characterPath, TEXT))
+					loadCharacterJson(characterPath);
 				else
-					playerPositionArray = json.position;
-
-				if (json.playerCamera_position != null)
-					playerCameraPosition = json.playerCamera_position;
-				else
-					playerCameraPosition = json.camera_position;
-
-				healthIcon = json.healthicon;
-				singDuration = json.sing_duration;
-				flipX = !!json.flip_x;
-				if(json.no_antialiasing) {
-					antialiasing = false;
-					noAntialiasing = true;
-				}
-
-				if(json.arrowSkin != null)
-					arrowSkin = json.arrowSkin;
-				else
-					arrowSkin = 'NOTE_assets';
-
-				if(json.arrowStyle != null)
-					arrowStyle = json.arrowStyle;
-				else
-					arrowStyle = 'base';
-
-				if(json.splashSkin != null)
-					splashSkin = json.splashSkin;
-				else
-					splashSkin = 'noteSplashes';
-
-				if(json.isPlayerChar)
-					wasPlayer = json.isPlayerChar;
-
-				if(json.healthbar_colors != null && json.healthbar_colors.length > 2)
-					healthColorArray = json.healthbar_colors;
-
-				antialiasing = !noAntialiasing;
-				if(!ClientPrefs.globalAntialiasing) antialiasing = false;
-
-				animationsArray = json.animations;
-				if(animationsArray != null && animationsArray.length > 0) {
-					for (anim in animationsArray) {
-						var animAnim:String = '' + anim.anim;
-						var animName:String = '' + anim.name;
-						var animFps:Int = anim.fps;
-						var animLoop:Bool = !!anim.loop; //Bruh
-						var animIndices:Array<Int> = anim.indices;
-						if (animateAtlas != null) {
-							if(animIndices != null && animIndices.length > 0) {
-								animateAtlas.animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
-							} else {
-								animateAtlas.animation.addByPrefix(animAnim, animName, animFps, animLoop);
-							}
-						}
-						else
-						{
-							if(animIndices != null && animIndices.length > 0) {
-								animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
-							} else {
-								animation.addByPrefix(animAnim, animName, animFps, animLoop);
-							}
-						}
-
-						if(isPlayer)
-						{
-							if(anim.offsets_player != null && anim.offsets_player.length > 1) {
-								addOffsetPlayer(anim.anim, anim.offsets_player[0], anim.offsets_player[1]);
-							}
-							else if(anim.offsets != null && anim.offsets.length > 1) {
-								addOffsetPlayer(anim.anim, anim.offsets[0], anim.offsets[1]);
-							}
-						}
-						else
-						{
-							if(anim.offsets != null && anim.offsets.length > 1) {
-								addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
-							}
-						}
-					}
-				} else {
-					quickAnimAdd('idle', 'BF idle dance');
-				}
+					loadCharacterJson('characters/' + DEFAULT_CHARACTER + '.json');
 		}
 		originalFlipX = flipX;
 
@@ -274,6 +170,128 @@ class Character extends FNFSprite
 				skipDance = true;
 				loadMappedAnims();
 				playAnim("shoot1");
+		}
+	}
+
+	function loadCharacterJson(jsonPath:String) {
+		var rawJson = Paths.getTextFromFile(jsonPath);
+
+		var json:CharacterFile = cast TJSON.parse(rawJson);
+		loadFrames(json.image);
+		imageFile = json.image;
+
+		if(json.scale != 1) {
+			jsonScale = json.scale;
+			setGraphicSize(Std.int(width * jsonScale));
+			updateHitbox();
+		}
+
+		positionArray = json.position;
+		cameraPosition = json.camera_position;
+
+		if (json.player_position != null)
+			playerPositionArray = json.player_position;
+		else
+			playerPositionArray = json.position;
+
+		if (json.playerCamera_position != null)
+			playerCameraPosition = json.playerCamera_position;
+		else
+			playerCameraPosition = json.camera_position;
+
+		healthIcon = json.healthicon;
+		singDuration = json.sing_duration;
+		flipX = !!json.flip_x;
+		if(json.no_antialiasing) {
+			antialiasing = false;
+			noAntialiasing = true;
+		}
+
+		if(json.arrowSkin != null)
+			arrowSkin = json.arrowSkin;
+		else
+			arrowSkin = 'noteSkins/NOTE_assets';
+
+
+		if(json.arrowStyle != null)
+			arrowStyle = json.arrowStyle;
+		else
+			arrowStyle = 'base';
+
+		if(json.splashSkin != null)
+			splashSkin = json.splashSkin;
+		else
+			splashSkin = 'noteSplashes';
+
+		//Percache image first
+		if(splashSkin == 'noteSplashes' || splashSkin == 'noteSplashes/noteSplashes')
+			Paths.image(NoteSplash.defaultNoteSplash + NoteSplash.getSplashSkinPostfix());
+		else
+			Paths.image(splashSkin);
+
+		if(arrowSkin == 'NOTE_assets' || arrowSkin == 'noteSkins/NOTE_assets')
+			Paths.image('noteSkins/NOTE_assets' + Note.getNoteSkinPostfix());
+		else
+			Paths.image(arrowSkin);
+
+		if(json.isPlayerChar)
+			wasPlayer = json.isPlayerChar;
+		else
+			wasPlayer = curCharacter.startsWith('bf');
+
+		disabledRGB = json.disableRGBNote;
+
+		if(json.healthbar_colors != null && json.healthbar_colors.length > 2)
+			healthColorArray = json.healthbar_colors;
+
+		antialiasing = !noAntialiasing;
+		if(!ClientPrefs.globalAntialiasing) antialiasing = false;
+
+		animationsArray = json.animations;
+		if(animationsArray != null && animationsArray.length > 0) {
+			for (anim in animationsArray) {
+				var animAnim:String = '' + anim.anim;
+				var animName:String = '' + anim.name;
+				var animFps:Int = anim.fps;
+				var animLoop:Bool = !!anim.loop; //Bruh
+				var animIndices:Array<Int> = anim.indices;
+				if (animateAtlas != null) {
+					if(animIndices != null && animIndices.length > 0) {
+						animateAtlas.animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
+					} else {
+						animateAtlas.animation.addByPrefix(animAnim, animName, animFps, animLoop);
+					}
+				}
+				else
+				{
+					if(animIndices != null && animIndices.length > 0) {
+						animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
+					} else {
+						animation.addByPrefix(animAnim, animName, animFps, animLoop);
+					}
+				}
+
+				if(isPlayer)
+				{
+					var offsetsPlayer:Array<Int> = anim.offsets_player;
+					if(anim.offsets_player != null)
+						offsetsPlayer = anim.offsets_player;
+					else
+						offsetsPlayer = anim.offsets;
+					
+					if(offsetsPlayer != null && offsetsPlayer.length > 1) {
+						addOffsetPlayer(anim.anim, offsetsPlayer[0], offsetsPlayer[1]);
+					}
+				}
+				else
+				{
+					if(anim.offsets != null && anim.offsets.length > 1) {
+						addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
+					}
+				}
+			}
+		} else {
+			quickAnimAdd('idle', 'BF idle dance');
 		}
 	}
 
@@ -306,6 +324,27 @@ class Character extends FNFSprite
 			}
 		}
 
+	}
+
+	public function resizeOffsets() {
+		if(isPlayer)
+		{
+			for (i in animOffsetsPlayer.keys())
+				animOffsetsPlayer[i] = [animOffsetsPlayer[i][0] * scale.x, animOffsets[i][1] * scale.y];
+		}
+		else
+		{
+			for (i in animOffsets.keys())
+				animOffsets[i] = [animOffsets[i][0] * scale.x, animOffsets[i][1] * scale.y];
+		}
+	}
+
+	public static function getSplashSkin()
+	{
+		var skin:String = '';
+		if(ClientPrefs.splashSkin != 'Psych')
+			skin += '-' + ClientPrefs.splashSkin.trim().toLowerCase().replace(' ', '_');
+		return skin;
 	}
 
 	override function update(elapsed:Float)
@@ -444,14 +483,17 @@ class Character extends FNFSprite
 	
 	function loadMappedAnims():Void
 	{
-		var noteData:Array<SwagSection> = util.Song.loadFromJson('picospeaker', Paths.formatToSongPath(PlayState.SONG.song)).notes;
-		for (section in noteData) {
-			for (songNotes in section.sectionNotes) {
-				animationNotes.push(songNotes);
+		if(!debugMode)
+		{
+			var noteData:Array<SwagSection> = util.Song.loadFromJson('picospeaker', Paths.formatToSongPath(PlayState.SONG.song)).notes;
+			for (section in noteData) {
+				for (songNotes in section.sectionNotes) {
+					animationNotes.push(songNotes);
+				}
 			}
+			TankmenBG.animationNotes = animationNotes;
+			animationNotes.sort(sortAnims);
 		}
-		TankmenBG.animationNotes = animationNotes;
-		animationNotes.sort(sortAnims);
 	}
 
 	function sortAnims(Obj1:Array<Dynamic>, Obj2:Array<Dynamic>):Int

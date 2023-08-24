@@ -1,7 +1,0 @@
--cp src
--cp test
--main TestAll
--D utest
--dce full
-
-extraParams.hxml

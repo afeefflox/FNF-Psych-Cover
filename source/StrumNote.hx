@@ -1,30 +1,22 @@
 package;
 
-import objects.Note;
-import meta.state.PlayState;
-import flixel.FlxG;
-import flixel.FlxSprite;
-import flixel.graphics.frames.FlxAtlasFrames;
-import util.ColorSwap;
+import util.RGBPalette;
+import util.RGBPalette.RGBShaderReference;
 import objects.Character;
-import flixel.group.FlxGroup.FlxTypedGroup;
-import flixel.tweens.FlxTween;
-import flixel.tweens.FlxEase;
-using StringTools;
+import objects.Note;
 
 class StrumNote extends FlxSprite
 {
-	private var colorSwap:ColorSwap;
+	public var rgbShader:RGBShaderReference;
 	public var resetAnim:Float = 0;
 	private var noteData:Int = 0;
 	public var direction:Float = 90;//plan on doing scroll directions soon -bb
 	public var downScroll:Bool = false;//plan on doing scroll directions soon -bb
 	public var sustainReduce:Bool = true;
-	
 	private var player:Int;
-	
-	public var texture(default, set):String = null;
+	public var useRGBShader(default, set):Bool = true;
 	public var style(default, set):String = null;
+	public var texture(default, set):String = null;
 	private function set_texture(value:String):String {
 		if(texture != value) {
 			texture = value;
@@ -41,24 +33,47 @@ class StrumNote extends FlxSprite
 		return value;
 	}
 
-	public function new(x:Float, y:Float, leData:Int, player:Int, ?arrowSkin:String, ?arrowStyle:String) {
-		colorSwap = new ColorSwap();
-		shader = colorSwap.shader;
+	function set_useRGBShader(value:Bool):Bool
+	{
+		return useRGBShader = value;
+	}
+
+	public function new(x:Float, y:Float, leData:Int, player:Int) {
+		if(leData > -1  && leData < 4) {
+			rgbShader = new RGBShaderReference(this, Note.initializeGlobalRGBShader(leData));
+			rgbShader.enabled = false;
+			
+			var arr:Array<FlxColor> = ClientPrefs.arrowRGB[leData];
+			if(style == 'pixel') arr = ClientPrefs.arrowRGBPixel[leData];
+			
+			if(leData <= arr.length)
+			{
+				@:bypassAccessor
+				{
+					rgbShader.r = arr[0];
+					rgbShader.g = arr[1];
+					rgbShader.b = arr[2];
+				}
+			}
+		}
+	
+
 		noteData = leData;
 		this.player = player;
 		this.noteData = leData;
 		super(x, y);
 
-		var skin:String = 'NOTE_assets';
-		if(arrowSkin != null && arrowSkin.length > 1) skin = arrowSkin;
-		if(arrowSkin == null) arrowSkin = 'NOTE_assets';
+		var skin:String = null;
+		if(PlayState.SONG != null && PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1) skin = PlayState.SONG.arrowSkin;
+		else skin = 'noteSkins/NOTE_assets';
 
-		var styleStuff:String = 'normal';
-		if(arrowStyle != null && arrowStyle.length > 1) styleStuff = arrowStyle;
-		if(arrowStyle == null) arrowStyle = 'normal';
+		var customSkin:String = skin + Note.getNoteSkinPostfix();
+		if(style == 'pixel' && Paths.fileExists('images/pixelUI/$customSkin.png', IMAGE)) 
+			skin = 'pixelUI/' + customSkin;
+		else if(Paths.fileExists('images/$customSkin.png', IMAGE)) 
+			skin = customSkin;
+
 		texture = skin; //Load texture and anims
-		style = styleStuff;
-
 		scrollFactor.set();
 	}
 
@@ -66,14 +81,26 @@ class StrumNote extends FlxSprite
 	{
 		var lastAnim:String = null;
 		if(animation.curAnim != null) lastAnim = animation.curAnim.name;
-
 		switch(style)
 		{
 			case 'pixel':
-				loadGraphic(Paths.image('pixelUI/' + texture));
+				if(Paths.fileExists('images/pixelUI/$texture.png', IMAGE))
+					loadGraphic(Paths.image('pixelUI/' + texture));
+				else if(Paths.fileExists('images/pixelUI/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
+					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix()));
+				else
+					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets'));
+				
+				
 				width = width / 4;
 				height = height / 5;
-				loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+
+				if(Paths.fileExists('images/pixelUI/$texture.png', IMAGE))
+					loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+				else if(Paths.fileExists('images/pixelUI/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
+					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix()), true, Math.floor(width), Math.floor(height));
+				else
+					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets'), true, Math.floor(width), Math.floor(height));
 	
 				antialiasing = false;
 				setGraphicSize(Std.int(width * PlayState.daPixelZoom));
@@ -102,7 +129,14 @@ class StrumNote extends FlxSprite
 						animation.add('confirm', [15, 19], 24, false);
 				}
 			default:
-				frames = Paths.getSparrowAtlas(texture);
+				if(Paths.fileExists('images/$texture.png', IMAGE))
+					frames = Paths.getSparrowAtlas(texture);
+				else if(Paths.fileExists('images/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
+					frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets' + Note.getNoteSkinPostfix());
+				else
+					frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets');
+
+
 				animation.addByPrefix('green', 'arrowUP');
 				animation.addByPrefix('blue', 'arrowDOWN');
 				animation.addByPrefix('purple', 'arrowLEFT');
@@ -156,40 +190,59 @@ class StrumNote extends FlxSprite
 				resetAnim = 0;
 			}
 		}
-
-		if(animation.curAnim != null && animation.curAnim.name == 'confirm'  && style != 'pixel') {
-			centerOrigin();
-		}
-
 		super.update(elapsed);
 	}
 
 	public function playAnim(anim:String, ?force:Bool = false) {
 		animation.play(anim, force);
-		centerOffsets();
-		centerOrigin();
-		if(animation.curAnim == null || animation.curAnim.name == 'static') {
-			colorSwap.hue = 0;
-			colorSwap.saturation = 0;
-			colorSwap.brightness = 0;
-		} else {
-			if (noteData > -1 && noteData < ClientPrefs.arrowHSV.length)
-			{
-				colorSwap.hue = ClientPrefs.arrowHSV[noteData][0] / 360;
-				colorSwap.saturation = ClientPrefs.arrowHSV[noteData][1] / 100;
-				colorSwap.brightness = ClientPrefs.arrowHSV[noteData][2] / 100;
-			}
-
-			if(animation.curAnim != null && animation.curAnim.name == 'confirm' && style != 'pixel') {
-				centerOrigin();
-			}
+		if(animation.curAnim != null)
+		{
+			centerOffsets();
+			centerOrigin();
 		}
+		if(rgbShader != null && useRGBShader) rgbShader.enabled = (animation.curAnim != null && animation.curAnim.name != 'static');
 	}
 }
 
+
+class StrumLineNote extends FlxTypedGroup<StrumNote>
+{
+	public var characters:Array<Character>;
+	public var autoplay:Bool = true;
+
+	public var keyAmount:Int = 4;
+	public var doTween:Bool = true;
+	public var babyArrow:StrumNote; 
+	public var player:Int = 0;
+
+	public function new(characters:Array<Character>, ?autoplay:Bool = true)
+	{
+		super();
+		this.characters = characters;
+		this.autoplay = autoplay;
+	}
+}
+
+class StrumLineEditorNote extends FlxTypedGroup<StrumNote>
+{
+	public var autoplay:Bool = true;
+
+	public var keyAmount:Int = 4;
+	public var doTween:Bool = true;
+	public var babyArrow:StrumNote; 
+	public var player:Int = 0;
+
+	public function new(?autoplay:Bool = true)
+	{
+		super();
+		this.autoplay = autoplay;
+	}
+}
+
+
 class StrumFakeNote extends FlxSprite
 {
-	private var colorSwap:ColorSwap;
+	public var rgbShader:RGBShaderReference;
 	public var resetAnim:Float = 0;
 	private var noteData:Int = 0;
 	public var direction:Float = 90;//plan on doing scroll directions soon -bb
@@ -208,15 +261,37 @@ class StrumFakeNote extends FlxSprite
 	}
 
 	public function new(x:Float, y:Float, leData:Int, player:Int) {
-		colorSwap = new ColorSwap();
-		shader = colorSwap.shader;
 		noteData = leData;
 		this.player = player;
 		this.noteData = leData;
 		super(x, y);
 
-		var skin:String = 'NOTE_assets';
-		if(PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1) skin = PlayState.SONG.arrowSkin;
+		rgbShader = new RGBShaderReference(this, Note.initializeGlobalRGBShader(leData));
+		rgbShader.enabled = false;
+		
+		var arr:Array<FlxColor> = ClientPrefs.arrowRGB[leData];
+		if(PlayState.isPixelStage) arr = ClientPrefs.arrowRGBPixel[leData];
+		
+		if(leData <= arr.length)
+		{
+			@:bypassAccessor
+			{
+				rgbShader.r = arr[0];
+				rgbShader.g = arr[1];
+				rgbShader.b = arr[2];
+			}
+		}
+
+		var skin:String = null;
+		if(PlayState.SONG != null && PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1) skin = PlayState.SONG.arrowSkin;
+		else skin = 'noteSkins/NOTE_assets';
+
+		var customSkin:String = skin + Note.getNoteSkinPostfix();
+		if(PlayState.isPixelStage && Paths.fileExists('images/pixelUI/$customSkin.png', IMAGE)) 
+			skin = 'pixelUI/' + customSkin;
+		else if(Paths.fileExists('images/$customSkin.png', IMAGE)) 
+			skin = customSkin;
+
 		texture = skin; //Load texture and anims
 
 		scrollFactor.set();
@@ -229,10 +304,23 @@ class StrumFakeNote extends FlxSprite
 
 		if(PlayState.isPixelStage)
 		{
-			loadGraphic(Paths.image('pixelUI/' + texture));
+			if(Paths.fileExists('images/pixelUI/$texture.png', IMAGE))
+				loadGraphic(Paths.image('pixelUI/' + texture));
+			else if(Paths.fileExists('images/pixelUI/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
+				loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix()));
+			else
+				loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets'));
+			
+			
 			width = width / 4;
 			height = height / 5;
-			loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+
+			if(Paths.fileExists('images/pixelUI/$texture.png', IMAGE))
+				loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+			else if(Paths.fileExists('images/pixelUI/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
+				loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix()), true, Math.floor(width), Math.floor(height));
+			else
+				loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets'), true, Math.floor(width), Math.floor(height));
 
 			antialiasing = false;
 			setGraphicSize(Std.int(width * PlayState.daPixelZoom));
@@ -263,7 +351,13 @@ class StrumFakeNote extends FlxSprite
 		}
 		else
 		{
-			frames = Paths.getSparrowAtlas(texture);
+			if(Paths.fileExists('images/$texture.png', IMAGE))
+				frames = Paths.getSparrowAtlas(texture);
+			else if(Paths.fileExists('images/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
+				frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets' + Note.getNoteSkinPostfix());
+			else
+				frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets');
+
 			animation.addByPrefix('green', 'arrowUP');
 			animation.addByPrefix('blue', 'arrowDOWN');
 			animation.addByPrefix('purple', 'arrowLEFT');
@@ -316,52 +410,16 @@ class StrumFakeNote extends FlxSprite
 				resetAnim = 0;
 			}
 		}
-		//if(animation.curAnim != null){ //my bad i was upset
-		if(animation.curAnim.name == 'confirm' && !PlayState.isPixelStage) {
-			centerOrigin();
-		//}
-		}
-
 		super.update(elapsed);
 	}
 
 	public function playAnim(anim:String, ?force:Bool = false) {
 		animation.play(anim, force);
-		centerOffsets();
-		centerOrigin();
-		if(animation.curAnim == null || animation.curAnim.name == 'static') {
-			colorSwap.hue = 0;
-			colorSwap.saturation = 0;
-			colorSwap.brightness = 0;
-		} else {
-			if (noteData > -1 && noteData < ClientPrefs.arrowHSV.length)
-			{
-				colorSwap.hue = ClientPrefs.arrowHSV[noteData][0] / 360;
-				colorSwap.saturation = ClientPrefs.arrowHSV[noteData][1] / 100;
-				colorSwap.brightness = ClientPrefs.arrowHSV[noteData][2] / 100;
-			}
-
-			if(animation.curAnim.name == 'confirm' && !PlayState.isPixelStage) {
-				centerOrigin();
-			}
+		if(animation.curAnim != null)
+		{
+			centerOffsets();
+			centerOrigin();
 		}
-	}
-}
-
-class StrumLineNote extends FlxTypedGroup<StrumNote>
-{
-	public var characters:Array<Character>;
-	public var autoplay:Bool = true;
-
-	public var keyAmount:Int = 4;
-	public var doTween:Bool = true;
-	public var babyArrow:StrumNote; 
-	public var player:Int = 0;
-
-	public function new(characters:Array<Character>, ?autoplay:Bool = true)
-	{
-		super();
-		this.characters = characters;
-		this.autoplay = autoplay;
+		rgbShader.enabled = (animation.curAnim != null && animation.curAnim.name != 'static');
 	}
 }

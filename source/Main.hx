@@ -12,7 +12,7 @@ import openfl.events.Event;
 import openfl.display.StageScaleMode;
 import lime.app.Application;
 import meta.state.TitleState;
-
+import util.script.Globals;
 #if desktop
 import Discord.DiscordClient;
 #end
@@ -26,6 +26,7 @@ import sys.FileSystem;
 import sys.io.File;
 import sys.io.Process;
 #end
+
 
 using StringTools;
 
@@ -42,6 +43,7 @@ class Main extends Sprite
 	};
 
 	public static var fpsVar:FPS;
+	public static var changeID:Int = 0;
 
 	// You can pretty much ignore everything from here on - your code should go in your states.
 
@@ -76,6 +78,10 @@ class Main extends Sprite
 
 	private function setupGame():Void
 	{
+		#if CRASH_HANDLER
+		Lib.current.loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, onCrash);
+		#end
+
 		var stageWidth:Int = Lib.current.stage.stageWidth;
 		var stageHeight:Int = Lib.current.stage.stageHeight;
 
@@ -87,7 +93,9 @@ class Main extends Sprite
 			game.width = Math.ceil(stageWidth / game.zoom);
 			game.height = Math.ceil(stageHeight / game.zoom);
 		}
-	
+
+		#if LUA_ALLOWED Lua.set_callbacks_function(cpp.Callable.fromStaticFunction(CallbackHandler.call)); #end
+		Controls.instance = new Controls();
 		ClientPrefs.loadDefaultKeys();
 		addChild(new FlxGame(game.width, game.height, game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate, game.skipSplash, game.startFullscreen));
 
@@ -106,10 +114,6 @@ class Main extends Sprite
 		FlxG.mouse.visible = false;
 		#end
 		
-		#if CRASH_HANDLER
-		Lib.current.loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, onCrash);
-		#end
-
 		#if desktop
 		if (!DiscordClient.isInitialized) {
 			DiscordClient.initialize();
@@ -118,6 +122,26 @@ class Main extends Sprite
 			});
 		}
 		#end
+
+		FlxG.signals.gameResized.add(function (w, h) {
+			if (FlxG.cameras != null) {
+			  for (cam in FlxG.cameras.list) {
+			   @:privateAccess
+			   if (cam != null && cam._filters != null)
+				   resetSpriteCache(cam.flashSprite);
+			  }
+			}
+
+			if (FlxG.game != null)
+			resetSpriteCache(FlxG.game);
+	   });
+	}
+
+	static function resetSpriteCache(sprite:Sprite):Void {
+		@:privateAccess {
+		        sprite.__cacheBitmap = null;
+			sprite.__cacheBitmapData = null;
+		}
 	}
 
 	// Code was entirely made by sqirra-rng for their fnf engine named "Izzy Engine", big props to them!!!

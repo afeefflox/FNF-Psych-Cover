@@ -49,7 +49,7 @@ class AtlasFrameMaker extends FlxFramesCollection
 		var animationData:AnimationData = Json.parse(Paths.getTextFromFile('images/$key/Animation.json', library));
 		var atlasData:AtlasData = Json.parse(Paths.getTextFromFile('images/$key/spritemap.json', library).replace("\uFEFF", ""));
 
-		var graphic:FlxGraphic = Paths.image('$key/spritemap', library);
+		var graphic:FlxGraphic = getFlxGraphic('$key/spritemap', library);
 		var ss:SpriteAnimationLibrary = new SpriteAnimationLibrary(animationData, atlasData, graphic.bitmap);
 		var t:SpriteMovieClip = ss.createAnimation(noAntialiasing);
 		if(_excludeArray == null)
@@ -72,7 +72,33 @@ class AtlasFrameMaker extends FlxFramesCollection
 				frameCollection.pushFrame(y);
 			}
 		}
+
+		// clear memory
+		graphic.bitmap.dispose();
+		graphic.bitmap.disposeImage();
+		graphic.destroy();
 		return frameCollection;
+	}
+
+	static function getFlxGraphic(key:String, library:String)
+	{
+		var bitmap:BitmapData = null;
+		var file:String = null;
+
+		#if MODS_ALLOWED
+		file = Paths.modsImages(key, library);
+		if (FileSystem.exists(file))
+			bitmap = BitmapData.fromFile(file);
+		else
+		#end
+		{
+			file = Paths.getPath('images/$key.png', IMAGE, library);
+			if (Assets.exists(file, IMAGE))
+				bitmap = Assets.getBitmapData(file);
+		}
+
+		if (bitmap != null) return FlxGraphic.fromBitmapData(bitmap, false, file);
+		return null;
 	}
 
 	@:noCompletion static function getFramesArray(t:SpriteMovieClip,animation:String):Array<FlxFrame>

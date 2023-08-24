@@ -14,6 +14,10 @@ end
 
 
 -- Gameplay/Song interactions
+function onSectionHit()
+	-- triggered after it goes to the next section
+end
+
 function onBeatHit()
 	-- triggered 4 times per section
 end
@@ -36,12 +40,21 @@ function onStartCountdown()
 	return Function_Continue;
 end
 
+function onCountdownStarted()
+	-- called AFTER countdown started, if you want to stop it from starting, refer to the previous function (onStartCountdown)
+end
+
 function onCountdownTick(counter)
 	-- counter = 0 -> "Three"
 	-- counter = 1 -> "Two"
 	-- counter = 2 -> "One"
 	-- counter = 3 -> "Go!"
 	-- counter = 4 -> Nothing happens lol, tho it is triggered at the same time as onSongStart i think
+end
+
+function onSpawnNote(id, data, type, isSustainNote, strumTime)
+	--You can use id to get other properties from notes, for example:
+	--getPropertyFromGroup('notes', id, 'texture')
 end
 
 function onSongStart()
@@ -88,6 +101,20 @@ function onSkipDialogue(line)
 end
 
 
+-- Key Press/Release
+function onKeyPress(key)
+	-- key can be: 0 - left, 1 - down, 2 - up, 3 - right
+end
+
+function onKeyRelease(key)
+	-- key can be: 0 - left, 1 - down, 2 - up, 3 - right
+end
+
+function onGhostTap(key)
+	-- key can be: 0 - left, 1 - down, 2 - up, 3 - right
+end
+
+
 -- Note miss/hit
 function goodNoteHit(id, direction, noteType, isSustainNote)
 	-- Function called when you hit a note (after note hit calculations)
@@ -101,6 +128,16 @@ function opponentNoteHit(id, direction, noteType, isSustainNote)
 	-- Works the same as goodNoteHit, but for Opponent's notes being hit
 end
 
+--Fake Character
+function fakeGoodNoteHit(id, direction, noteType, isSustainNote)
+	-- it nothing tho just work for fake character as double chart thing 
+end
+
+function fakeOpponentNoteHit(id, direction, noteType, isSustainNote)
+	-- it nothing tho just work for fake character as double chart thing 
+end
+
+
 function noteMissPress(direction)
 	-- Called after the note press miss calculations
 	-- Player pressed a button, but there was no note to hit (ghost miss)
@@ -111,6 +148,13 @@ function noteMiss(id, direction, noteType, isSustainNote)
 	-- Player missed a note by letting it go offscreen
 end
 
+function noteHit(id, direction, noteType, isSustainNote)
+	-- Works the same as goodNoteHit or opponentNoteHit, but it both notes being hit
+end
+
+function characterPlayAnimation(direction, noteType, isSustainNote)
+	-- idk basically character play animation for note being hit or miss stuff
+end
 
 -- Other function hooks
 function onRecalculateRating()
@@ -130,19 +174,24 @@ end
 
 
 -- Event notes hooks
-function onEvent(name, value1, value2)
+function onEvent(name, value1, value2, strumTime)
 	-- event note triggered
 	-- triggerEvent() does not call this function!!
 
-	-- print('Event triggered: ', name, value1, value2);
+	-- print('Event triggered: ', name, value1, value2, strumTime);
+end
+
+function onEventPushed(name, value1, value2, strumTime)
+	-- Called for every event note, recommended to precache assets
 end
 
 function eventEarlyTrigger(name)
 	--[[
 	Here's a port of the Kill Henchmen early trigger but on Lua instead of Haxe:
 
-	if name == 'Kill Henchmen'
+	if name == 'Kill Henchmen' then
 		return 280;
+	end
 
 	This makes the "Kill Henchmen" event be triggered 280 miliseconds earlier so that the kill sound is perfectly timed with the song
 	]]--
@@ -151,7 +200,32 @@ function eventEarlyTrigger(name)
 end
 
 
--- Tween/Timer hooks
+
+
+-- Custom Substates
+function onCustomSubstateCreate(name)
+	-- name is defined on "openCustomSubstate(name)"
+end
+
+function onCustomSubstateCreatePost(name)
+	-- name is defined on "openCustomSubstate(name)"
+end
+
+function onCustomSubstateUpdate(name, elapsed)
+	-- name is defined on "openCustomSubstate(name)"
+end
+
+function onCustomSubstateUpdatePost(name, elapsed)
+	-- name is defined on "openCustomSubstate(name)"
+end
+
+function onCustomSubstateDestroy(name)
+	-- name is defined on "openCustomSubstate(name)"
+	-- called when you use "closeCustomSubstate()"
+end
+
+
+-- Tween/Timer/Sound hooks
 function onTweenCompleted(tag)
 	-- A tween you called has been completed, value "tag" is it's tag
 end
@@ -161,22 +235,7 @@ function onTimerCompleted(tag, loops, loopsLeft)
 	-- loops = how many loops it will have done when it ends completely
 	-- loopsLeft = how many are remaining
 end
-function onCheckForAchievement(name)
-	
-	--deals with achievement checks
-	
-	--EX:
---[[
-  if name == 'sick-full-combo' and getProperty('bads') == 0 and getProperty('goods') == 0 and getProperty('shits') == 0 and getProperty('endingSong') then
-    return Function_Continue
-  end
-  if name == 'bad-health-finish' and getProperty('health') < 0.01 and getProperty('endingSong') then
-    return Function_Continue
-  end
-  if name == 'halfway' and getSongPosition >  getPropertyFromClass('flixel.FlxG','sound.music.length')/2 then
-    return Function_Continue
-  end
-	
-	
-	]]--
+
+function onSoundCompleted(tag)
+	-- Only called if you use playSound() with a tag
 end
