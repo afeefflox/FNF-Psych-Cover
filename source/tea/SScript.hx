@@ -17,7 +17,8 @@ import sys.FileSystem;
 import sys.io.File;
 #end
 
-import tea.backend.*;
+import tea.backend.SScriptX;
+import tea.backend.SScriptVer;
 import tea.backend.crypto.Base32;
 
 using StringTools;
