@@ -14,7 +14,6 @@ import lime.app.Application;
 import meta.state.TitleState;
 import util.script.Globals;
 import codenamestuff.AudioSwitch;
-import codenamestuff.Cache;
 #if desktop
 import Discord.DiscordClient;
 #end
