@@ -295,6 +295,7 @@ class PauseSubState extends MusicBeatSubstate
 						{
 							boyfriend.volume = 0;
 						}
+						
 					}
 					if(PlayState.instance.vocalsDad != null)
 					{
@@ -302,6 +303,7 @@ class PauseSubState extends MusicBeatSubstate
 						{
 							dad.volume = 0;
 						}
+						
 					}
 					
 					MusicBeatState.switchState(new OptionsState());
@@ -372,6 +374,7 @@ class PauseSubState extends MusicBeatSubstate
 			{
 				boyfriend.volume = 0;
 			}
+				
 		}
 		if(PlayState.instance.vocalsDad != null)
 		{
@@ -379,6 +382,7 @@ class PauseSubState extends MusicBeatSubstate
 			{
 				dad.volume = 0;
 			}
+				
 		}
 		
 

@@ -56,8 +56,7 @@ class StrumNote extends FlxSprite
 				}
 			}
 		}
-	
-
+		
 		noteData = leData;
 		this.player = player;
 		this.noteData = leData;
@@ -88,8 +87,6 @@ class StrumNote extends FlxSprite
 					loadGraphic(Paths.image('pixelUI/' + texture));
 				else if(Paths.fileExists('images/pixelUI/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
 					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix()));
-				else
-					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets'));
 				
 				
 				width = width / 4;
@@ -99,8 +96,6 @@ class StrumNote extends FlxSprite
 					loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
 				else if(Paths.fileExists('images/pixelUI/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
 					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix()), true, Math.floor(width), Math.floor(height));
-				else
-					loadGraphic(Paths.image('pixelUI/noteSkins/NOTE_assets'), true, Math.floor(width), Math.floor(height));
 	
 				antialiasing = false;
 				setGraphicSize(Std.int(width * PlayState.daPixelZoom));
@@ -133,8 +128,6 @@ class StrumNote extends FlxSprite
 					frames = Paths.getSparrowAtlas(texture);
 				else if(Paths.fileExists('images/noteSkins/NOTE_assets' + Note.getNoteSkinPostfix() + '.png', IMAGE))
 					frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets' + Note.getNoteSkinPostfix());
-				else
-					frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets');
 
 
 				animation.addByPrefix('green', 'arrowUP');

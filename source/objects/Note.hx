@@ -518,6 +518,9 @@ class Note extends FlxSprite
 			y = strumY + offsetY + correctionOffset + Math.sin(angleDir) * distance;
 			if(myStrum.downScroll && isSustainNote)
 			{
+
+				if(animation.curAnim.name.endsWith('end')) //yk it has to do it
+					flipY = true;
 				switch(style)
 				{
 					case 'pixel':
@@ -525,6 +528,11 @@ class Note extends FlxSprite
 					default:
 						y -= (frameHeight * scale.y) - (Note.swagWidth / 2);
 				}
+			}
+			else if(isSustainNote) //go back up scroll
+			{
+				if(animation.curAnim.name.endsWith('end')) //yk it has to do it
+					flipY = false;
 			}
 		}
 	}

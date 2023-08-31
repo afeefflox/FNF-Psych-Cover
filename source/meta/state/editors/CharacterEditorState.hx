@@ -1536,7 +1536,6 @@ class CharacterEditorState extends MusicBeatState
 		{
 			directories.push(Paths.mods('charactersBETADCIU/'));
 			directories.push(Paths.mods(Mods.currentModDirectory + '/charactersBETADCIU/'));
-			directories.push(Paths.getPreloadPath('charactersBETADCIU/'));
 		}
 		for (i in 0...directories.length) {
 			var directory:String = directories[i];

@@ -176,6 +176,22 @@ class ChartingState extends MusicBeatState
 	var tempBpm:Float = 0;
 	var playbackSpeed:Float = 1;
 
+	var bgRedColor:Int = 45;
+	var bgGreenColor:Int = 121;
+	var bgBlueColor:Int = 235;
+
+	var tabsRedColor:Int = 45;
+	var tabsGreenColor:Int = 121;
+	var tabsBlueColor:Int = 235;
+
+	var pattenOneRedColor:Int = 45;
+	var pattenOneGreenColor:Int = 121;
+	var pattenOneBlueColor:Int = 235;
+
+	var pattenTwoRedColor:Int = 102;
+	var pattenTwoGreenColor:Int = 145;
+	var pattenTwoBlueColor:Int = 209;
+
 	var vocals:FlxSound = null;
 	var vocalsDad:Array<FlxSound> = [];
 	var vocalsBoyfriend:Array<FlxSound> = [];
@@ -209,6 +225,7 @@ class ChartingState extends MusicBeatState
 	private var blockPressWhileScrolling:Array<FlxUIDropDownMenuCustom> = [];
 
 	var waveformSprite:FlxSprite;
+	var bg:FlxSprite;
 	var gridLayer:FlxTypedGroup<FlxSprite>;
 
 	var healthIconP1:String = null;
@@ -277,7 +294,7 @@ class ChartingState extends MusicBeatState
 
 		vortex = FlxG.save.data.chart_vortex;
 		ignoreWarnings = FlxG.save.data.ignoreWarnings;
-		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
 		bg.scrollFactor.set();
 		bg.color = 0xFF222222;
 		add(bg);
@@ -371,7 +388,8 @@ class ChartingState extends MusicBeatState
 			{name: "Section", label: 'Section'},
 			{name: "Note", label: 'Note'},
 			{name: "Events", label: 'Events'},
-			{name: "Charting", label: 'Charting'},
+			{name: "Charting", label: 'Charting'}
+			//{name: 'Visuals', label: 'Visuals'}
 		];
 
 		UI_box = new FlxUITabMenu(null, tabs, true);
@@ -414,6 +432,7 @@ class ChartingState extends MusicBeatState
 		addNoteUI();
 		addEventsUI();
 		addChartingUI();
+		//addVisualsUI();
 		updateHeads();
 		updateWaveform();
 		//UI_box.selected_tab = 4;
@@ -544,10 +563,21 @@ class ChartingState extends MusicBeatState
 		#if MODS_ALLOWED
 		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Mods.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
 		for(mod in Mods.getGlobalMods())
+		{
 			directories.push(Paths.mods(mod + '/characters/'));
+			if(PlayState.isBETADCIU)
+				directories.push(Paths.mods(mod + '/charactersBETADCIU/'));
+		}
+
+		if(PlayState.isBETADCIU)
+		{
+			directories.push(Paths.mods('charactersBETADCIU/'));
+			directories.push(Paths.mods(Mods.currentModDirectory + '/charactersBETADCIU/'));
+		}
 		#else
 		var directories:Array<String> = [Paths.getPreloadPath('characters/')];
 		#end
+
 
 		var tempArray:Array<String> = [];
 		var characters:Array<String> = Mods.mergeAllTextsNamed('data/characterList.txt', Paths.getPreloadPath());
@@ -603,7 +633,20 @@ class ChartingState extends MusicBeatState
 		#if MODS_ALLOWED
 		var directories:Array<String> = [Paths.mods('stages/'), Paths.mods(Mods.currentModDirectory + '/stages/'), Paths.getPreloadPath('stages/')];
 		for(mod in Mods.getGlobalMods())
+		{
 			directories.push(Paths.mods(mod + '/stages/'));
+			if(PlayState.isBETADCIU)
+				directories.push(Paths.mods(mod + '/stagesBETADCIU/'));
+		}
+
+		
+		if(PlayState.isBETADCIU)
+		{
+			directories.push(Paths.mods('stagesBETADCIU/'));
+			directories.push(Paths.mods(Mods.currentModDirectory + '/stagesBETADCIU/'));
+			directories.push(Paths.getPreloadPath('stagesBETADCIU/'));
+		}
+			
 		#else
 		var directories:Array<String> = [Paths.getPreloadPath('stages/')];
 		#end
@@ -1168,30 +1211,7 @@ class ChartingState extends MusicBeatState
 		UI_box.addGroup(tab_group_event);
 	}
 
-	function changeEventSelected(change:Int = 0)
-	{
-		if(curSelectedNote != null && curSelectedNote[2] == null) //Is event note
-		{
-			curEventSelected += change;
-			if(curEventSelected < 0) curEventSelected = Std.int(curSelectedNote[1].length) - 1;
-			else if(curEventSelected >= curSelectedNote[1].length) curEventSelected = 0;
-			selectedEventText.text = 'Selected Event: ' + (curEventSelected + 1) + ' / ' + curSelectedNote[1].length;
-		}
-		else
-		{
-			curEventSelected = 0;
-			selectedEventText.text = 'Selected Event: None';
-		}
-		updateNoteUI();
-	}
 
-	function setAllLabelsOffset(button:FlxButton, x:Float, y:Float)
-	{
-		for (point in button.labelOffsets)
-		{
-			point.set(x, y);
-		}
-	}
 
 	var metronome:FlxUICheckBox;
 	var mouseScrollingQuant:FlxUICheckBox;
@@ -1207,6 +1227,9 @@ class ChartingState extends MusicBeatState
 		#if desktop
 		if (FlxG.save.data.chart_waveformInst == null) FlxG.save.data.chart_waveformInst = false;
 		if (FlxG.save.data.chart_waveformVoices == null) FlxG.save.data.chart_waveformVoices = false;
+
+		if (FlxG.save.data.chart_waveformBFVoices == null) FlxG.save.data.chart_waveformBFVoices = false;
+		if (FlxG.save.data.chart_waveformDadVoices == null) FlxG.save.data.chart_waveformDadVoices = false;
 		#end
 
 		#if MODS_ALLOWED
@@ -1238,8 +1261,8 @@ class ChartingState extends MusicBeatState
 		}
 
 		audios.push('None');
+		var songKeyNormal:String = '$currentSongName/Voices';
 
-		
 		var audioDropDown = new FlxUIDropDownMenuCustom(10, 90, FlxUIDropDownMenuCustom.makeStrIdLabelArray(audios, true), function(audio:String)
 		{
 			currerntAudio = audios[Std.parseInt(audio)];
@@ -1255,7 +1278,19 @@ class ChartingState extends MusicBeatState
 
 			if(currerntAudio.startsWith('Voices') || currerntAudio.startsWith('voices'))
 			{
-				FlxG.save.data.chart_waveformVoices = true;
+				if(currerntAudio == 'Voices' && !Paths.fileExists(songKeyNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs'))
+				{
+					FlxG.save.data.chart_waveformVoices = false;
+					FlxG.save.data.chart_waveformBFVoices = true;
+					FlxG.save.data.chart_waveformDadVoices = true;
+				}
+				else
+				{
+					FlxG.save.data.chart_waveformVoices = true;
+					FlxG.save.data.chart_waveformBFVoices = false;
+					FlxG.save.data.chart_waveformDadVoices = false;
+				}
+
 				FlxG.save.data.chart_waveformInst = false;
 			}
 			else if(currerntAudio.startsWith('None'))
@@ -1361,20 +1396,6 @@ class ChartingState extends MusicBeatState
 		playSoundBf = new FlxUICheckBox(check_mute_inst.x, check_mute_vocals.y + 30, null, null, 'Play Sound (Boyfriend notes)', 100,
 			function() {
 				FlxG.save.data.chart_playSoundBf = playSoundBf.checked;
-				if(vocalsBoyfriend != null)
-				{
-					/*
-					for(bf in vocalsBoyfriend)
-					{
-						var vol:Float = 1;
-		
-						if (!playSoundBf.checked)
-							vol = 0;
-			
-						bf.volume = vol;
-					}
-					*/
-				}
 			}
 		);
 		if (FlxG.save.data.chart_playSoundBf == null) FlxG.save.data.chart_playSoundBf = false;
@@ -1554,6 +1575,117 @@ class ChartingState extends MusicBeatState
 		tab_group_data.add(new FlxText(noteStyleDropDown.x, noteStyleDropDown.y - 15, 0, 'Note Style:'));
 		tab_group_data.add(new FlxText(noteSplashesInputText.x, noteSplashesInputText.y - 15, 0, 'Note Splashes Texture:'));
 		UI_box.addGroup(tab_group_data);
+	}
+
+	var bgSliderRed:FlxUISlider;
+	var bgSliderGreen:FlxUISlider;
+	var bgSliderBlue:FlxUISlider;
+
+	var tabSliderRed:FlxUISlider;
+	var tabSliderGreen:FlxUISlider;
+	var tabSliderBlue:FlxUISlider;
+
+	var pattenOneSliderRed:FlxUISlider;
+	var pattenOneSliderGreen:FlxUISlider;
+	var pattenOneSliderBlue:FlxUISlider;
+
+	var pattenTwoSliderRed:FlxUISlider;
+	var pattenTwoSliderGreen:FlxUISlider;
+	var pattenTwoSliderBlue:FlxUISlider;
+	function addVisualsUI()
+	{
+		var tab_group_visual = new FlxUI(null, UI_box);
+		tab_group_visual.name = 'Visuals';
+
+		//BG
+		bgSliderRed = new FlxUISlider(this, 'bgRedColor', 10, 40, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		bgSliderRed.nameLabel.text = 'Background Red Color';
+
+		bgSliderGreen = new FlxUISlider(this, 'bgGreenColor', 10, bgSliderRed.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		bgSliderGreen.nameLabel.text = 'Background Green Color';
+
+		bgSliderBlue  = new FlxUISlider(this, 'bgBlueColor', 10, bgSliderGreen.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		bgSliderBlue.nameLabel.text = 'Background Blue Color';
+
+		//TABS
+		tabSliderRed = new FlxUISlider(this, 'tabsRedColor', 10, 240, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		tabSliderRed.nameLabel.text = 'Tabs Red Color';
+
+		tabSliderGreen = new FlxUISlider(this, 'tabsGreenColor', 10, tabSliderRed.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		tabSliderGreen.nameLabel.text = 'Tabs Green Color';
+
+		tabSliderBlue  = new FlxUISlider(this, 'tabsBlueColor', 10, tabSliderGreen.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		tabSliderBlue.nameLabel.text = 'Tabs Blue Color';
+
+		//PATTEN ONE
+		pattenOneSliderRed = new FlxUISlider(this, 'pattenOneRedColor', 10, 440, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		pattenOneSliderRed.nameLabel.text = 'Patten One Red Color';
+
+		pattenOneSliderGreen = new FlxUISlider(this, 'pattenOneGreenColor', 10, pattenOneSliderRed.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		pattenOneSliderGreen.nameLabel.text = 'Patten One Green Color';
+
+		pattenOneSliderBlue  = new FlxUISlider(this, 'pattenOneBlueColor', 10, pattenOneSliderGreen.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		pattenOneSliderBlue.nameLabel.text = 'Patten One Blue Color';
+
+		//PATTEN TWO
+		pattenTwoSliderRed = new FlxUISlider(this, 'pattenTwoRedColor', 10, 540, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		pattenTwoSliderRed.nameLabel.text = 'Patten Two Red Color';
+
+		pattenTwoSliderGreen = new FlxUISlider(this, 'pattenTwoGreenColor', 10, pattenTwoSliderRed.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		pattenTwoSliderGreen.nameLabel.text = 'Patten Two Green Color';
+
+		pattenTwoSliderBlue  = new FlxUISlider(this, 'pattenTwoBlueColor', 10, pattenTwoSliderGreen.y + 35, 0, 255, 150, null, 5, FlxColor.WHITE, FlxColor.BLACK);
+		pattenTwoSliderBlue.nameLabel.text = 'Patten Two Blue Color';
+
+
+		tab_group_visual.add(new FlxText(10, 25, 0, 'Background Color:'));
+		tab_group_visual.add(new FlxText(10, 225, 0, 'Tabs Color:'));
+		tab_group_visual.add(new FlxText(10, 425, 0, 'Patten Chart 1 Color:')); //how do I call this
+		tab_group_visual.add(new FlxText(10, 525, 0, 'Patten Chart 2 Color:')); //how do I call this
+
+
+		tab_group_visual.add(bgSliderRed);
+		tab_group_visual.add(bgSliderGreen);
+		tab_group_visual.add(bgSliderBlue);
+
+		tab_group_visual.add(tabSliderRed);
+		tab_group_visual.add(tabSliderGreen);
+		tab_group_visual.add(tabSliderBlue);
+
+		tab_group_visual.add(pattenOneSliderRed);
+		tab_group_visual.add(pattenOneSliderGreen);
+		tab_group_visual.add(pattenOneSliderBlue);
+
+		tab_group_visual.add(pattenTwoSliderRed);
+		tab_group_visual.add(pattenTwoSliderGreen);
+		tab_group_visual.add(pattenTwoSliderBlue);
+
+		UI_box.addGroup(tab_group_visual);
+	}
+
+	function changeEventSelected(change:Int = 0)
+	{
+		if(curSelectedNote != null && curSelectedNote[2] == null) //Is event note
+		{
+			curEventSelected += change;
+			if(curEventSelected < 0) curEventSelected = Std.int(curSelectedNote[1].length) - 1;
+			else if(curEventSelected >= curSelectedNote[1].length) curEventSelected = 0;
+			selectedEventText.text = 'Selected Event: ' + (curEventSelected + 1) + ' / ' + curSelectedNote[1].length;
+		}
+		else
+		{
+			curEventSelected = 0;
+			selectedEventText.text = 'Selected Event: None';
+		}
+		updateNoteUI();
+	}
+
+	function setAllLabelsOffset(button:FlxButton, x:Float, y:Float)
+	{
+		for (point in button.labelOffsets)
+		{
+			point.set(x, y);
+		}
 	}
 
 	//Proably for Split track vocal :/
@@ -2005,6 +2137,40 @@ class ChartingState extends MusicBeatState
 			{
 				case 'playbackSpeed':
 					playbackSpeed = Std.int(sliderRate.value);
+				//BG
+				case 'bgRedColor':
+					bgRedColor = Std.int(bgSliderRed.value);
+					bg.color.red = bgRedColor;
+				case 'bgGreenColor':
+					bgGreenColor = Std.int(bgSliderGreen.value);
+					bg.color.green = bgGreenColor;
+				case 'bgBlueColor':
+					bgBlueColor = Std.int(bgSliderBlue.value);
+					bg.color.blue = bgBlueColor;
+				//Tabs
+				case 'tabsRedColor':
+					tabsRedColor = Std.int(tabSliderRed.value);
+					UI_box.color.red = tabsRedColor;
+				case 'tabsGreenColor':
+					tabsGreenColor = Std.int(tabSliderGreen.value);
+					UI_box.color.green = tabsGreenColor;
+				case 'tabsBlueColor':
+					tabsBlueColor = Std.int(tabSliderBlue.value);
+					UI_box.color.blue = tabsBlueColor;
+				//Grid
+				case 'pattenOneRedColor'|'pattenTwoRedColor'|'pattenOneGreenColor'|'pattenTwoGreenColor' |'pattenOneBlueColor'|'pattenTwoBlueColor':
+					pattenOneRedColor = Std.int(pattenOneSliderRed.value);
+					pattenOneGreenColor = Std.int(pattenOneSliderGreen.value);
+					pattenOneBlueColor = Std.int(pattenOneSliderBlue.value);
+
+					pattenTwoRedColor = Std.int(pattenTwoSliderRed.value);
+					pattenTwoGreenColor = Std.int(pattenTwoSliderGreen.value);
+					pattenTwoBlueColor = Std.int(pattenTwoSliderBlue.value);
+
+					FlxGridOverlay.overlay(gridBG, 1, 1, columns, Std.int(getSectionBeats(curSec + 1) * 4 * zoomList[curZoom]), true, 
+					    FlxColor.fromRGB(pattenOneRedColor, pattenOneGreenColor, pattenOneBlueColor), FlxColor.fromRGB(pattenTwoRedColor, pattenTwoGreenColor, pattenTwoBlueColor));
+					FlxGridOverlay.overlay(nextGridBG, columns, Std.int(getSectionBeats(curSec + 1) * 4 * zoomList[curZoom]), true, 
+					    FlxColor.fromRGB(pattenOneRedColor, pattenOneGreenColor, pattenOneBlueColor), FlxColor.fromRGB(pattenTwoRedColor, pattenTwoGreenColor, pattenTwoBlueColor));
 			}
 		}
 
@@ -2033,6 +2199,7 @@ class ChartingState extends MusicBeatState
 
 	var lastConductorPos:Float;
 	var colorSine:Float = 0;
+	var columns:Int = 9;
 	override function update(elapsed:Float)
 	{
 		curStep = recalculateSteps();
@@ -2825,7 +2992,7 @@ class ChartingState extends MusicBeatState
 
 	var lastSecBeats:Float = 0;
 	var lastSecBeatsNext:Float = 0;
-	var columns:Int = 9;
+	
 	function reloadGridLayer() {
 		gridLayer.clear();
 		gridBG = FlxGridOverlay.create(1, 1, columns, Std.int(getSectionBeats() * 4 * zoomList[curZoom]));
@@ -2834,7 +3001,7 @@ class ChartingState extends MusicBeatState
 		gridBG.updateHitbox();
 
 		#if desktop
-		if(FlxG.save.data.chart_waveformInst || FlxG.save.data.chart_waveformVoices) {
+		if(FlxG.save.data.chart_waveformInst || FlxG.save.data.chart_waveformVoices || FlxG.save.data.chart_waveformBFVoices || FlxG.save.data.chart_waveformDadVoices) {
 			updateWaveform();
 		}
 		#end
@@ -2925,8 +3092,7 @@ class ChartingState extends MusicBeatState
 			waveformSprite.pixels.fillRect(new Rectangle(0, 0, width, height), 0x00FFFFFF);
 		}
 		waveformPrinted = false;
-
-		if(!FlxG.save.data.chart_waveformInst && !FlxG.save.data.chart_waveformVoices) {
+		if(!FlxG.save.data.chart_waveformInst && !FlxG.save.data.chart_waveformVoices && !FlxG.save.data.chart_waveformBFVoices &&  !FlxG.save.data.chart_waveformDadVoices) {
 			//trace('Epic fail on the waveform lol');
 			return;
 		}
@@ -2961,7 +3127,7 @@ class ChartingState extends MusicBeatState
 			if(vocals != null)
 			{
 				var sound:FlxSound = vocals; //I think traget vocal lmao
-				if (currerntAudio == 'Voices' && ((!Paths.fileExists(songKeyDadNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs') && !Paths.fileExists(songKeyBFNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs') ) || (!Paths.fileExists(songKeyBF + '.' + Paths.SOUND_EXT, SOUND, false, 'songs') && !Paths.fileExists(songKeyDad + '.' + Paths.SOUND_EXT, SOUND, false, 'songs')) ) && sound._sound != null && sound._sound.__buffer != null) {
+				if (sound._sound != null && sound._sound.__buffer != null) {
 					var bytes:Bytes = sound._sound.__buffer.data.toBytes();
 	
 					wavData = waveformData(
@@ -2975,13 +3141,14 @@ class ChartingState extends MusicBeatState
 					);
 				}
 			}
+		}
 
-
-			if(vocalsDad != null)
+		if (FlxG.save.data.chart_waveformBFVoices) {
+			if(vocalsBoyfriend != null)
 			{
-				for(sound in vocalsDad)
+				for(sound in vocalsBoyfriend)
 				{
-					if (currerntAudio == 'Voices' && !Paths.fileExists(songKeyVoiceNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs') && sound._sound != null && sound._sound.__buffer != null) {
+					if (sound._sound != null && sound._sound.__buffer != null) {
 						var bytes:Bytes = sound._sound.__buffer.data.toBytes();
 		
 						wavData = waveformData(
@@ -2996,12 +3163,14 @@ class ChartingState extends MusicBeatState
 					}
 				}
 			}
-		
-			if(vocalsBoyfriend != null)
+		}
+
+		if (FlxG.save.data.chart_waveformDadVoices) {
+			if(vocalsDad != null)
 			{
-				for(sound in vocalsBoyfriend)
+				for(sound in vocalsDad)
 				{
-					if (currerntAudio == 'Voices' && !Paths.fileExists(songKeyVoiceNormal + '.' + Paths.SOUND_EXT, SOUND, false, 'songs') && sound._sound != null && sound._sound.__buffer != null) {
+					if (sound._sound != null && sound._sound.__buffer != null) {
 						var bytes:Bytes = sound._sound.__buffer.data.toBytes();
 		
 						wavData = waveformData(

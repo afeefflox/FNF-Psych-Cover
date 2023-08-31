@@ -13,6 +13,8 @@ import openfl.display.StageScaleMode;
 import lime.app.Application;
 import meta.state.TitleState;
 import util.script.Globals;
+import codenamestuff.AudioSwitch;
+import codenamestuff.Cache;
 #if desktop
 import Discord.DiscordClient;
 #end
@@ -30,6 +32,119 @@ import sys.io.Process;
 
 using StringTools;
 
+#if windows
+@:buildXml('
+<target id="haxe">
+	<lib name="dwmapi.lib" if="windows" />
+	<lib name="shell32.lib" if="windows" />
+	<lib name="gdi32.lib" if="windows" />
+	<lib name="ole32.lib" if="windows" />
+	<lib name="uxtheme.lib" if="windows" />
+</target>
+')
+
+// majority is taken from microsofts doc 
+@:cppFileCode('
+#include "mmdeviceapi.h"
+#include "combaseapi.h"
+#include <iostream>
+#include <Windows.h>
+#include <cstdio>
+#include <tchar.h>
+#include <dwmapi.h>
+#include <winuser.h>
+#include <Shlobj.h>
+#include <wingdi.h>
+#include <shellapi.h>
+#include <uxtheme.h>
+
+#define SAFE_RELEASE(punk)  \\
+			  if ((punk) != NULL)  \\
+				{ (punk)->Release(); (punk) = NULL; }
+
+static long lastDefId = 0;
+
+class AudioFixClient : public IMMNotificationClient {
+	LONG _cRef;
+	IMMDeviceEnumerator *_pEnumerator;
+	
+	public:
+	AudioFixClient() :
+		_cRef(1),
+		_pEnumerator(NULL)
+	{
+		HRESULT result = CoCreateInstance(__uuidof(MMDeviceEnumerator),
+							  NULL, CLSCTX_INPROC_SERVER,
+							  __uuidof(IMMDeviceEnumerator),
+							  (void**)&_pEnumerator);
+		if (result == S_OK) {
+			_pEnumerator->RegisterEndpointNotificationCallback(this);
+		}
+	}
+
+	~AudioFixClient()
+	{
+		SAFE_RELEASE(_pEnumerator);
+	}
+
+	ULONG STDMETHODCALLTYPE AddRef()
+	{
+		return InterlockedIncrement(&_cRef);
+	}
+
+	ULONG STDMETHODCALLTYPE Release()
+	{
+		ULONG ulRef = InterlockedDecrement(&_cRef);
+		if (0 == ulRef)
+		{
+			delete this;
+		}
+		return ulRef;
+	}
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(
+								REFIID riid, VOID **ppvInterface)
+	{
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId)
+	{
+		return S_OK;
+	};
+
+	HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId)
+	{
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(
+								LPCWSTR pwstrDeviceId,
+								DWORD dwNewState)
+	{
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(
+								LPCWSTR pwstrDeviceId,
+								const PROPERTYKEY key)
+	{
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(
+		EDataFlow flow, ERole role,
+		LPCWSTR pwstrDeviceId)
+	{
+		Main_obj::audioDisconnected = true;
+		return S_OK;
+	};
+};
+
+AudioFixClient *curAudioFix;
+')
+#end
+
 class Main extends Sprite
 {
 	var game = {
@@ -44,6 +159,7 @@ class Main extends Sprite
 
 	public static var fpsVar:FPS;
 	public static var changeID:Int = 0;
+	public static var audioDisconnected:Bool = false;
 
 	// You can pretty much ignore everything from here on - your code should go in your states.
 
@@ -76,6 +192,10 @@ class Main extends Sprite
 		setupGame();
 	}
 
+	@:functionCode('
+	if (!curAudioFix) curAudioFix = new AudioFixClient();
+	')
+
 	private function setupGame():Void
 	{
 		#if CRASH_HANDLER
@@ -95,10 +215,11 @@ class Main extends Sprite
 		}
 
 		#if LUA_ALLOWED Lua.set_callbacks_function(cpp.Callable.fromStaticFunction(CallbackHandler.call)); #end
+		//Cache.init(); it kinda brokey
 		Controls.instance = new Controls();
 		ClientPrefs.loadDefaultKeys();
 		addChild(new FlxGame(game.width, game.height, game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate, game.skipSplash, game.startFullscreen));
-
+		
 		#if !mobile
 		fpsVar = new FPS(10, 3, 0xFFFFFF);
 		addChild(fpsVar);
@@ -108,6 +229,8 @@ class Main extends Sprite
 			fpsVar.visible = ClientPrefs.showFPS;
 		}
 		#end
+
+		AudioSwitch.init();
 
 		#if html5
 		FlxG.autoPause = false;

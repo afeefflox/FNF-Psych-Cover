@@ -24,16 +24,8 @@ class NoteSplash extends FlxSprite
 	public function new(x:Float = 0, y:Float = 0) {
 		super(x, y);
 
-		var skin:String = null;
-		if(PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0) 
-			skin = PlayState.SONG.splashSkin;
-		else 
-			skin = defaultNoteSplash + getSplashSkinPostfix();
-		
 		rgbShader = new PixelSplashShaderRef();
 		shader = rgbShader.shader;
-		precacheConfig(skin);
-		_configLoaded = skin;
 		scrollFactor.set();
 		//setupNoteSplash(x, y, 0);
 	}
@@ -50,17 +42,17 @@ class NoteSplash extends FlxSprite
 		aliveTime = 0;
 
 		var texture:String = null;
-
-		if(note != null && (note.noteSplashTexture == defaultNoteSplash || note.noteSplashTexture == 'noteSplashes')) 
-			texture = defaultNoteSplash + getSplashSkinPostfix();
-		else if(note != null && note.noteSplashTexture != null) 
-			texture = note.noteSplashTexture;
-		else if(PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0) 
-			texture = PlayState.SONG.splashSkin;
+		if(note != null && note.noteSplashTexture != null) 
+		{
+			if(note.noteSplashTexture == 'noteSplashes' || note.noteSplashTexture == defaultNoteSplash)
+				texture = defaultNoteSplash + getSplashSkinPostfix();
+			else if (note.noteSplashTexture != null)
+				texture = note.noteSplashTexture;
+		}
 		else 
 			texture = defaultNoteSplash + getSplashSkinPostfix();
 		
-		var config:NoteSplashConfig = precacheConfig(texture);
+		var config:NoteSplashConfig = null;
 		if(_textureLoaded != texture)
 			config = loadAnims(texture);
 		else
@@ -78,22 +70,15 @@ class NoteSplash extends FlxSprite
 				if(note.noteSplashData.b != -1) note.rgbShader.b = note.noteSplashData.b;
 				tempShader = note.rgbShader.parent;
 			}
-			else 
-				tempShader = Note.globalRgbShaders[direction];
+			else tempShader = Note.globalRgbShaders[direction];
 		}
 
-		if(note.rgbShader != null)
-		{
-			rgbShader.copyValues(tempShader);
-		}
+		alpha = ClientPrefs.splashAlpha;
+		if(note != null) alpha = note.noteSplashData.a;
+		rgbShader.copyValues(tempShader);
 
-		if(note != null && note.rgbShader != null) 
-		{
-			rgbShader.copyValues(note.rgbShader.parent);
-			antialiasing = note.noteSplashData.antialiasing;
-		}
-		else if(note != null && note.style == 'pixel') antialiasing = false;
-		else if(!ClientPrefs.globalAntialiasing) antialiasing = false;
+		if(note != null) antialiasing = note.noteSplashData.antialiasing;
+		if(PlayState.isPixelStage || !ClientPrefs.globalAntialiasing) antialiasing = false;
 
 		_textureLoaded = texture;
 		offset.set(10, 10);
